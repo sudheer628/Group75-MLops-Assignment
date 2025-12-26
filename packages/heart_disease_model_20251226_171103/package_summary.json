@@ -1,0 +1,39 @@
+{
+  "package_info": {
+    "created_at": "2025-12-26T17:11:22.879355",
+    "package_directory": "packages\\heart_disease_model_20251226_171103",
+    "package_size_mb": 2.5083541870117188
+  },
+  "model_info": {
+    "model_name": "heart_disease_random_forest",
+    "version": 2,
+    "run_id": "811ed47c7f4c45d494a19f7f33c6bbe3",
+    "roc_auc": 0.9724025974025974,
+    "has_champion_alias": false,
+    "model_uri": "models:/heart_disease_random_forest/2"
+  },
+  "validation_results": {
+    "joblib_loading": true,
+    "prediction_test": true,
+    "mlflow_loading": true,
+    "configuration_files": true,
+    "overall": true
+  },
+  "files_included": [
+    "deployment_config.yaml",
+    "environment.yml",
+    "model.joblib",
+    "model.pkl",
+    "model_config.yaml",
+    "model_metadata.json",
+    "model_only.joblib",
+    "preprocessing_pipeline.joblib",
+    "README.md",
+    "requirements_core.txt",
+    "requirements_exact.txt",
+    "system_info.json"
+  ],
+  "directories_included": [
+    "mlflow_model"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "python_version": "3.12.12",
+  "python_implementation": "CPython",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+  "architecture": [
+    "64bit",
+    "WindowsPE"
+  ],
+  "machine": "AMD64",
+  "system": "Windows",
+  "release": "11",
+  "captured_at": "2025-12-26T17:07:11.880509"
+}

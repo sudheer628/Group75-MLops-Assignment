@@ -1,0 +1,21 @@
+[
+  "age",
+  "sex",
+  "cp",
+  "trestbps",
+  "chol",
+  "fbs",
+  "restecg",
+  "thalach",
+  "exang",
+  "oldpeak",
+  "slope",
+  "ca",
+  "thal",
+  "age_group",
+  "chol_age_ratio",
+  "heart_rate_reserve",
+  "risk_score",
+  "age_sex_interaction",
+  "cp_exang_interaction"
+]

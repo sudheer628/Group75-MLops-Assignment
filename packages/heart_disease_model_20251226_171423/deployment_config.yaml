@@ -1,0 +1,13 @@
+api:
+  host: 0.0.0.0
+  port: 8000
+  workers: 1
+logging:
+  format: json
+  level: INFO
+model:
+  path: ./model.joblib
+  preprocessing_path: ./preprocessing_pipeline.joblib
+monitoring:
+  enable_metrics: true
+  metrics_port: 9090

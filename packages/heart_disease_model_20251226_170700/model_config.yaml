@@ -1,0 +1,13 @@
+model:
+  format: joblib
+  name: heart_disease_random_forest
+  type: sklearn_pipeline
+  version: 2
+prediction:
+  output_type: binary_classification
+  return_probabilities: true
+  threshold: 0.5
+preprocessing:
+  feature_engineering: true
+  handle_missing_values: true
+  scaling: robust
