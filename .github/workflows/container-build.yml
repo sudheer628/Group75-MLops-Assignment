@@ -73,9 +73,9 @@ jobs:
         # Start container in background
         docker run -d -p 8000:8000 --name test-container "$IMAGE_TAG"
         
-        # Wait for startup and model download from Railway
+        # Wait for startup and model download from Railway (increased timeout to 120s)
         echo "Waiting for container startup and model download from Railway..."
-        sleep 60
+        sleep 120
         
         # Check if container is running
         if ! docker ps | grep test-container; then

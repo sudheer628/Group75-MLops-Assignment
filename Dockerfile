@@ -19,9 +19,8 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements-api.txt .
 
-# Install Python dependencies with Python 3.10 compatible versions
+# Install Python dependencies with numpy 2.0+ for cloudpickle compatibility
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir numpy==1.21.6 scikit-learn==1.1.3 && \
     pip install --no-cache-dir -r requirements-api.txt
 
 # Copy application code
