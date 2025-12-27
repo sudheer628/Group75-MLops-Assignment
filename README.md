@@ -11,20 +11,39 @@ This project implements an end-to-end MLOps pipeline for heart disease predictio
 ## Project Structure
 
 ```
+├── app/                          # FastAPI application
+│   ├── main.py                   # FastAPI server and endpoints
+│   ├── models.py                 # Pydantic models for validation
+│   ├── prediction.py             # ML prediction logic
+│   └── config.py                 # Configuration settings
 ├── src/                          # Source code
 │   ├── data_acquisition_eda.py   # Task 1: Data acquisition and EDA
 │   ├── feature_engineering.py    # Task 2: Feature engineering and model development
 │   ├── experiment_tracking.py    # Task 3: MLflow experiment tracking
-│   └── model_packaging.py        # Task 4: Model packaging and reproducibility
+│   ├── model_packaging.py        # Task 4: Model packaging and reproducibility
+│   └── ci_utils.py               # CI/CD utilities
+├── test-data/                    # API test data
+│   ├── sample-input.json         # High-risk test case
+│   └── sample-input-healthy.json # Low-risk test case
+├── scripts/                      # Testing and utility scripts
+│   └── test-api-cloud.sh         # Cloud-based API testing
+├── .devcontainer/                # GitHub Codespaces configuration
+│   └── devcontainer.json         # VS Code dev container setup
+├── .github/workflows/            # GitHub Actions CI/CD
+│   ├── ci.yml                    # Main CI pipeline
+│   ├── container-build.yml       # Container build and registry
+│   ├── model-training.yml        # Model training pipeline
+│   └── pr-validation.yml         # PR validation
 ├── data/                         # Data storage (gitignored except structure)
 │   ├── raw/                      # Raw datasets
 │   └── processed/                # Processed datasets
-├── figures/                      # EDA visualizations (gitignored except structure)
 ├── models/                       # Trained models (gitignored except structure)
 ├── tests/                        # Unit tests
-├── logs/                         # Application logs (gitignored except structure)
-├── .gitignore                    # Git ignore rules
-├── requirements.txt              # Python dependencies
+├── Dockerfile                    # Container definition
+├── docker-compose.yml            # Container orchestration
+├── requirements.txt              # Python dependencies (ML pipeline)
+├── requirements-api.txt          # API-specific dependencies
+├── CODESPACES.md                 # GitHub Codespaces guide
 └── README.md                     # This file
 ```
 
@@ -98,24 +117,30 @@ Configure in `Settings → Secrets and variables → Actions`:
 
 - `MLFLOW_TRACKING_URI`: `https://mlflow-tracking-production-53fb.up.railway.app`
 
-## Testing Instructions
+## 🚀 **Quick Start (Cloud Development)**
 
-### Quick Test (Recommended)
+### **Option 1: GitHub Actions Testing (Recommended)**
 
-Run all tests with the simple test runner:
+1. **Push changes** to GitHub
+2. **Check Actions tab** for automated container builds and testing
+3. **View results** in workflow summaries
 
-**IMPORTANT: Always activate conda environment first:**
+### **Option 2: GitHub Codespaces Development**
+
+1. **Click "Code" → "Codespaces" → "Create codespace"**
+2. **Wait for automatic setup** (Python, Docker, dependencies)
+3. **Run tests**: `chmod +x scripts/test-api-cloud.sh && ./scripts/test-api-cloud.sh`
+4. **Access API** via forwarded ports
+
+### **Option 3: Use Pre-built Container**
 
 ```bash
-conda activate myenv
+# Pull from GitHub Container Registry
+docker pull ghcr.io/your-username/your-repo/heart-disease-api:latest
+docker run -p 8000:8000 ghcr.io/your-username/your-repo/heart-disease-api:latest
 ```
 
-### Quick Test (Recommended)
-
-```bash
-conda activate myenv
-python run_tests.py
-```
+**📖 Detailed Guide**: See [CODESPACES.md](CODESPACES.md) for comprehensive instructions.
 
 ### Individual Task Testing
 
@@ -428,6 +453,189 @@ python src/model_packaging.py
 
 **Model Storage Integration:**
 Task 4 unifies both Task 2 (local storage) and Task 3 (Railway MLflow storage) approaches by creating comprehensive deployment packages that include models from both sources, complete preprocessing pipelines, and all necessary metadata for production deployment. The Railway integration ensures team collaboration and professional experiment tracking.
+
+### **Task 5: CI/CD Pipeline & Automated Testing (Completed)**
+
+**Implementation completed:**
+
+- **GitHub Actions workflows** (3 workflows)
+- **Automated linting** (flake8, black, isort)
+- **Multi-Python testing** (3.11, 3.12)
+- **MLflow integration testing**
+- **Artifact management** (30-90 day retention)
+- **Professional reporting** and summaries
+- **Security scanning** and validation
+
+**Workflows Created:**
+
+#### 1. **CI Pipeline** (`.github/workflows/ci.yml`)
+
+- **Triggers**: Push to main/develop, Pull Requests
+- **Features**: Code quality checks, comprehensive testing, artifact generation, container testing
+- **Python Versions**: 3.11, 3.12 (matrix strategy)
+- **Caching**: Optimized pip dependency caching
+
+#### 2. **Model Training Pipeline** (`.github/workflows/model-training.yml`)
+
+- **Triggers**: Manual dispatch, Weekly schedule (Monday 2 AM)
+- **Features**: Complete pipeline execution, MLflow tracking, deployment packaging
+- **Artifacts**: 90-day retention for training outputs
+
+#### 3. **PR Validation** (`.github/workflows/pr-validation.yml`)
+
+- **Triggers**: Pull Request events
+- **Features**: Quick validation, security scanning, critical path testing
+
+### **Task 6: Model Containerization (Completed)** 🐳
+
+**Implementation completed:**
+
+- **FastAPI application** with comprehensive API endpoints
+- **Docker containerization** with multi-stage optimization
+- **GitHub Container Registry integration** (automated)
+- **Local development environment** with Docker Compose
+- **Comprehensive testing** (local and CI/CD)
+- **Production-ready deployment** configuration
+
+#### **FastAPI Application Features:**
+
+**Files**: `app/main.py`, `app/models.py`, `app/prediction.py`, `app/config.py`
+
+- **RESTful API** with FastAPI framework
+- **Input validation** with Pydantic models
+- **Comprehensive endpoints**:
+  - `POST /predict` - Heart disease prediction with confidence scores
+  - `GET /health` - Health check and service status
+  - `GET /` - API information and navigation
+  - `GET /model/info` - Model metadata and information
+  - `GET /docs` - Interactive API documentation (Swagger UI)
+  - `GET /redoc` - Alternative API documentation
+
+**Key Features:**
+
+- **Robust error handling** with proper HTTP status codes
+- **Input validation** with field constraints and type checking
+- **Confidence scoring** with risk level assessment (Low/Medium/High)
+- **Logging and monitoring** with structured logging
+- **CORS support** for web applications
+- **Health checks** for container orchestration
+- **Security** with non-root user execution
+
+#### **Container Features:**
+
+**Files**: `Dockerfile`, `docker-compose.yml`, `.dockerignore`
+
+- **Optimized Docker image** with Python 3.11 slim base
+- **Multi-architecture support** (AMD64, ARM64)
+- **Layer caching** for faster builds
+- **Security hardening** with non-root user
+- **Health checks** built into container
+- **Development environment** with Docker Compose
+
+#### **GitHub Container Registry Integration:**
+
+**File**: `.github/workflows/container-build.yml`
+
+- **Automated builds** on push to main/develop branches
+- **Multi-platform builds** (linux/amd64, linux/arm64)
+- **Automatic tagging** with git SHA, branch, and semantic versioning
+- **Container testing** in CI pipeline
+- **Registry push** to GitHub Container Registry (ghcr.io)
+- **Artifact caching** for faster subsequent builds
+
+#### **Cloud Development & Testing:**
+
+**Files**: `scripts/test-api-cloud.sh`, `test-data/`, `.devcontainer/`, `CODESPACES.md`
+
+- **GitHub Codespaces support** with automatic environment setup
+- **Cloud-based testing** script for container validation
+- **Sample test data** for different risk scenarios
+- **Automated validation** of API responses
+- **VS Code development environment** with pre-configured extensions
+
+#### **API Usage Examples:**
+
+**Health Check:**
+
+```bash
+curl https://your-api-url/health
+```
+
+**Prediction (High Risk):**
+
+```bash
+curl -X POST "https://your-api-url/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 55, "sex": 1, "cp": 3, "trestbps": 140,
+    "chol": 250, "fbs": 0, "restecg": 1, "thalach": 150,
+    "exang": 0, "oldpeak": 1.5, "slope": 2, "ca": 0, "thal": 3
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "prediction": 1,
+  "confidence": 0.85,
+  "probabilities": [0.15, 0.85],
+  "risk_level": "High"
+}
+```
+
+#### **Container Registry:**
+
+Images are automatically built and pushed to:
+
+- `ghcr.io/username/repo/heart-disease-api:latest`
+- `ghcr.io/username/repo/heart-disease-api:main-sha123`
+- `ghcr.io/username/repo/heart-disease-api:v1.0.0` (on tags)
+
+#### **Development Options:**
+
+**Option 1: GitHub Actions (Recommended)**
+
+```bash
+# Simply push your changes - GitHub Actions will:
+git add .
+git commit -m "Update API"
+git push
+
+# Then check the Actions tab for:
+# - Automated container builds
+# - Comprehensive API testing
+# - Container registry deployment
+```
+
+**Option 2: GitHub Codespaces**
+
+```bash
+# Open repository in Codespaces (see CODESPACES.md)
+# Docker and all dependencies pre-installed
+
+# Test the API
+chmod +x scripts/test-api-cloud.sh
+./scripts/test-api-cloud.sh
+
+# Access API documentation at forwarded port
+```
+
+**Option 3: Pull from Container Registry**
+
+```bash
+# Pull and run the latest built image
+docker pull ghcr.io/username/repo/heart-disease-api:latest
+docker run -p 8000:8000 ghcr.io/username/repo/heart-disease-api:latest
+```
+
+#### **Production Deployment Ready:**
+
+- **Container orchestration** ready (Kubernetes, Docker Swarm)
+- **Load balancer** compatible with health checks
+- **Environment configuration** through environment variables
+- **Monitoring** integration points built-in
+- **Scalability** designed for horizontal scaling
 
 ## Git Configuration
 
