@@ -24,7 +24,13 @@ class HeartDiseasePredictor:
             'age', 'sex', 'cp', 'trestbps', 'chol', 'fbs',
             'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal'
         ]
-        self.load_model()
+        self._initialized = False
+    
+    def _ensure_initialized(self):
+        """Ensure the predictor is initialized (lazy loading)"""
+        if not self._initialized:
+            self.load_model()
+            self._initialized = True
     
     def load_model(self) -> None:
         """Load the trained model and preprocessing pipeline"""
@@ -92,6 +98,9 @@ class HeartDiseasePredictor:
     def predict(self, input_data: PredictionInput) -> PredictionOutput:
         """Make prediction for heart disease"""
         try:
+            # Ensure predictor is initialized
+            self._ensure_initialized()
+            
             # Preprocess input
             processed_data = self.preprocess_input(input_data)
             
@@ -143,6 +152,11 @@ class HeartDiseasePredictor:
     @property
     def is_loaded(self) -> bool:
         """Check if model is loaded"""
+        if not self._initialized:
+            try:
+                self._ensure_initialized()
+            except Exception:
+                return False
         return self.model is not None
 
 

@@ -19,8 +19,9 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements-api.txt .
 
-# Install Python dependencies
+# Install Python dependencies with proper order
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir numpy==1.24.4 && \
     pip install --no-cache-dir -r requirements-api.txt
 
 # Copy application code

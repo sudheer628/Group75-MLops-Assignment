@@ -5,6 +5,14 @@ import os
 import logging
 from pathlib import Path
 from typing import Optional
+
+# Handle numpy import issues
+try:
+    import numpy as np
+except ImportError as e:
+    logging.error(f"Numpy import failed: {e}")
+    raise
+
 import mlflow
 import mlflow.sklearn
 from mlflow import MlflowClient
@@ -67,7 +75,7 @@ class ProductionModelLoader:
                     if roc_auc > best_performance:
                         best_performance = roc_auc
                         champion_info = {
-                            "model_name": f"heart_disease_{model_type}",
+                            "model_type": f"heart_disease_{model_type}",
                             "run_id": run.info.run_id,
                             "roc_auc": roc_auc,
                             "model_uri": f"runs:/{run.info.run_id}/model",
@@ -77,7 +85,7 @@ class ProductionModelLoader:
                 logger.error("Could not identify champion model from training runs")
                 return False
                 
-            logger.info(f"Champion model identified: {champion_info['model_name']}")
+            logger.info(f"Champion model identified: {champion_info['model_type']}")
             logger.info(f"ROC-AUC: {champion_info['roc_auc']:.4f}")
             logger.info(f"Run ID: {champion_info['run_id']}")
             

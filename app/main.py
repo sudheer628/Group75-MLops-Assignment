@@ -43,10 +43,12 @@ async def startup_event():
     """Startup event handler"""
     logger.info("Starting Heart Disease Prediction API")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
-    logger.info(f"Model loaded: {predictor.is_loaded}")
+    logger.info("Model will be loaded on first prediction request (lazy loading)")
     
-    if not predictor.is_loaded:
-        logger.error("Model not loaded! API will not function properly.")
+    # Create models directory if it doesn't exist
+    from pathlib import Path
+    models_dir = Path("models")
+    models_dir.mkdir(parents=True, exist_ok=True)
 
 
 @app.on_event("shutdown")
