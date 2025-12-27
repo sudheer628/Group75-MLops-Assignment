@@ -147,6 +147,8 @@ python tests/test_task4_model_packaging.py
 
 ## Setup Instructions for New Teammates
 
+> **Quick Setup Guide**: See [SETUP.md](SETUP.md) for a streamlined 5-minute setup process.
+
 ### Prerequisites
 
 - Python 3.9+
@@ -182,15 +184,11 @@ python tests/test_task4_model_packaging.py
 4. **Verify setup with comprehensive validation**
 
    ```bash
-   # Run comprehensive validation (recommended for new teammates)
-   python validate_fresh_setup.py
-   ```
-
-   **OR run quick test:**
-
-   ```bash
-   # Run all tests to verify everything works
+   # Run comprehensive validation + all tests (recommended)
    python run_tests.py
+
+   # OR run only validation (quick environment check)
+   python run_tests.py --validate-only
    ```
 
 ### Expected Test Results (Fresh Setup)
