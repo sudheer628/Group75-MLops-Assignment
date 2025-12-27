@@ -145,25 +145,89 @@ python tests/test_task4_model_packaging.py
 - Model persistence and saving
 - Full pipeline execution
 
-## Setup Instructions
+## Setup Instructions for New Teammates
+
+### Prerequisites
+
+- Python 3.9+
+- Conda package manager
+- Git
+
+### Fresh Workstation Setup (Step-by-Step)
 
 1. **Clone the repository**
 
    ```bash
    git clone <repository-url>
-   cd heart-disease-mlops
+   cd <repository-name>
    ```
 
-2. **Activate conda environment**
+2. **Create conda environment**
 
    ```bash
+   # Create new environment with Python 3.9
+   conda create -n myenv python=3.9
+
+   # Activate the environment
    conda activate myenv
    ```
 
 3. **Install dependencies**
+
    ```bash
+   # Install all required packages
    pip install -r requirements.txt
    ```
+
+4. **Verify setup with comprehensive validation**
+
+   ```bash
+   # Run comprehensive validation (recommended for new teammates)
+   python validate_fresh_setup.py
+   ```
+
+   **OR run quick test:**
+
+   ```bash
+   # Run all tests to verify everything works
+   python run_tests.py
+   ```
+
+### Expected Test Results (Fresh Setup)
+
+When running `python run_tests.py` on a fresh workstation, you should see:
+
+```
+✓ Task 1 Tests: PASS (downloads data, runs EDA)
+✓ Task 2 Tests: PASS (trains models locally)
+✓ Task 3 Tests: PASS (connects to Railway MLflow)
+✓ Task 4 Tests: PASS (packages models from Railway)
+```
+
+**Note**: First run will download the UCI dataset (~1MB) and may take 2-3 minutes for model training.
+
+### Troubleshooting Common Issues
+
+**Import Errors**:
+
+```bash
+# Make sure conda environment is activated
+conda activate myenv
+```
+
+**MLflow Connection Issues**:
+
+```bash
+# Test Railway connection
+python -c "import mlflow; mlflow.set_tracking_uri('https://mlflow-tracking-production-53fb.up.railway.app'); print('Connected')"
+```
+
+**Missing Data**:
+
+```bash
+# Run data acquisition first
+python src/data_acquisition_eda.py
+```
 
 **IMPORTANT: Always use the conda environment 'myenv' for all commands to avoid import errors.**
 
