@@ -7,7 +7,8 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    MLFLOW_TRACKING_URI=https://mlflow-tracking-production-53fb.up.railway.app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -25,8 +26,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY app/ ./app/
 
-# Copy models (these should exist from previous tasks)
-COPY models/ ./models/
+# Create models directory (models will be downloaded at runtime)
+RUN mkdir -p models
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' --shell /bin/bash appuser && \

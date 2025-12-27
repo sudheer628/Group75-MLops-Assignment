@@ -21,8 +21,8 @@ class PredictionInput(BaseModel):
     ca: int = Field(..., ge=0, le=4, description="Number of major vessels colored by fluoroscopy (0-4)")
     thal: int = Field(..., ge=0, le=3, description="Thalassemia (0: normal, 1: fixed defect, 2: reversible defect)")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "age": 55,
                 "sex": 1,
@@ -39,6 +39,7 @@ class PredictionInput(BaseModel):
                 "thal": 3
             }
         }
+    }
 
 
 class PredictionOutput(BaseModel):
@@ -48,8 +49,8 @@ class PredictionOutput(BaseModel):
     probabilities: List[float] = Field(..., description="Class probabilities [no_disease, disease]")
     risk_level: str = Field(..., description="Risk level (Low, Medium, High)")
     
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "prediction": 1,
                 "confidence": 0.85,
@@ -57,14 +58,19 @@ class PredictionOutput(BaseModel):
                 "risk_level": "High"
             }
         }
+    }
 
 
 class HealthResponse(BaseModel):
     """Health check response"""
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="API version")
-    model_loaded: bool = Field(..., description="Whether ML model is loaded")
+    ml_model_loaded: bool = Field(..., description="Whether ML model is loaded")
     timestamp: str = Field(..., description="Current timestamp")
+    
+    model_config = {
+        "protected_namespaces": ()
+    }
 
 
 class ErrorResponse(BaseModel):

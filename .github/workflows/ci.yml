@@ -109,10 +109,10 @@ jobs:
       if: always()
       run: |
         echo "## Test Results for Python ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Linting: ✅ Passed" >> $GITHUB_STEP_SUMMARY
-        echo "- Unit Tests: ✅ Completed" >> $GITHUB_STEP_SUMMARY
-        echo "- MLflow Integration: ✅ Tested" >> $GITHUB_STEP_SUMMARY
-        echo "- Artifacts Generated: ✅ Available" >> $GITHUB_STEP_SUMMARY
+        echo "- Linting: Passed" >> $GITHUB_STEP_SUMMARY
+        echo "- Unit Tests: Completed" >> $GITHUB_STEP_SUMMARY
+        echo "- MLflow Integration: Tested" >> $GITHUB_STEP_SUMMARY
+        echo "- Artifacts Generated: Available" >> $GITHUB_STEP_SUMMARY
 
   container-test:
     name: Test Container Build
@@ -123,7 +123,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+        
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       
@@ -141,26 +141,44 @@ jobs:
       run: |
         # Start container
         docker run -d -p 8000:8000 --name api-test heart-disease-api:test
-        sleep 15
         
-        # Basic health check
-        if curl -f http://localhost:8000/health; then
-          echo "✅ Container health check passed"
-        else
-          echo "❌ Container health check failed"
-          docker logs api-test
-          exit 1
-        fi
+        # Wait longer for model download from Railway
+        echo "Waiting for container startup and model download..."
+        sleep 30
+        
+        # Check container logs
+        echo "Container logs:"
+        docker logs api-test
+        
+        # Basic health check with retries
+        echo "Testing health endpoint..."
+        for i in {1..10}; do
+          if curl -f http://localhost:8000/health; then
+            echo "Container health check passed"
+            break
+          else
+            echo "Health check attempt $i failed, retrying..."
+            if [ $i -eq 10 ]; then
+              echo "Container health check failed after 10 attempts"
+              docker logs api-test
+              exit 1
+            fi
+            sleep 10
+          fi
+        done
         
         # Quick prediction test
+        echo "Testing prediction endpoint..."
         response=$(curl -s -X POST "http://localhost:8000/predict" \
           -H "Content-Type: application/json" \
           -d '{"age": 55, "sex": 1, "cp": 3, "trestbps": 140, "chol": 250, "fbs": 0, "restecg": 1, "thalach": 150, "exang": 0, "oldpeak": 1.5, "slope": 2, "ca": 0, "thal": 3}')
         
         if echo "$response" | jq -e '.prediction' > /dev/null; then
-          echo "✅ Container prediction test passed"
+          echo "Container prediction test passed"
+          echo "Response: $response"
         else
-          echo "❌ Container prediction test failed"
+          echo "Container prediction test failed"
+          echo "Response: $response"
           docker logs api-test
           exit 1
         fi
@@ -173,7 +191,7 @@ jobs:
       if: always()
       run: |
         echo "## Container Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Docker build successful" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Container starts correctly" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ API endpoints functional" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Ready for deployment" >> $GITHUB_STEP_SUMMARY
+        echo "- Docker build successful" >> $GITHUB_STEP_SUMMARY
+        echo "- Container starts correctly" >> $GITHUB_STEP_SUMMARY
+        echo "- API endpoints functional" >> $GITHUB_STEP_SUMMARY
+        echo "- Ready for deployment" >> $GITHUB_STEP_SUMMARY

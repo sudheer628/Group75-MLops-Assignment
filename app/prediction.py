@@ -29,12 +29,29 @@ class HeartDiseasePredictor:
     def load_model(self) -> None:
         """Load the trained model and preprocessing pipeline"""
         try:
+            # First, try to ensure model is available (download if necessary)
+            from .model_loader import ProductionModelLoader
+            
+            loader = ProductionModelLoader()
+            model_available = loader.ensure_model_available(settings.MODEL_PATH)
+            
+            if not model_available:
+                logger.error("Failed to ensure model availability")
+                raise FileNotFoundError(f"Could not load or download model: {settings.MODEL_PATH}")
+            
             # Load main model
             if Path(settings.MODEL_PATH).exists():
                 self.model = joblib.load(settings.MODEL_PATH)
                 logger.info(f"Model loaded from {settings.MODEL_PATH}")
             else:
                 logger.error(f"Model file not found: {settings.MODEL_PATH}")
+                logger.info("Available files in models directory:")
+                models_dir = Path("models")
+                if models_dir.exists():
+                    for file in models_dir.glob("*.joblib"):
+                        logger.info(f"  - {file}")
+                else:
+                    logger.error("Models directory does not exist")
                 raise FileNotFoundError(f"Model file not found: {settings.MODEL_PATH}")
             
             # Try to load preprocessing pipeline (optional for some models)

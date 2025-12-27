@@ -82,7 +82,7 @@ async def health_check():
     return HealthResponse(
         status="healthy" if predictor.is_loaded else "unhealthy",
         version=settings.API_VERSION,
-        model_loaded=predictor.is_loaded,
+        ml_model_loaded=predictor.is_loaded,
         timestamp=datetime.now().isoformat()
     )
 
