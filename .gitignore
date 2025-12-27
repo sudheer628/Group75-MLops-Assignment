@@ -127,6 +127,10 @@ models/*.h5
 models/*.onnx
 models/*.pb
 
+# Local evaluation results (use MLflow for production tracking)
+models/evaluation_results.json
+models/feature_names.json
+
 # Deployment packages (generated artifacts, not source code)
 packages/
 !packages/.gitkeep
