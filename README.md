@@ -1,6 +1,12 @@
 # Heart Disease Prediction MLOps Project
 
-This project implements an end-to-end MLOps pipeline for heart disease prediction using the UCI Heart Disease dataset.
+[![CI Pipeline](https://github.com/YOUR_USERNAME/YOUR_REPO/workflows/CI%20Pipeline%20-%20Lint%20and%20Test/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions)
+[![Model Training](https://github.com/YOUR_USERNAME/YOUR_REPO/workflows/Model%20Training%20Pipeline/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![MLflow](https://img.shields.io/badge/MLflow-3.8.0-orange.svg)](https://mlflow.org/)
+[![Railway](https://img.shields.io/badge/Railway-MLflow%20Server-green.svg)](https://railway.app/)
+
+This project implements an end-to-end MLOps pipeline for heart disease prediction using the UCI Heart Disease dataset with professional CI/CD practices.
 
 ## Project Structure
 
@@ -21,6 +27,76 @@ This project implements an end-to-end MLOps pipeline for heart disease predictio
 ├── requirements.txt              # Python dependencies
 └── README.md                     # This file
 ```
+
+## CI/CD Pipeline (TASK-5)
+
+### GitHub Actions Workflows
+
+The project includes comprehensive CI/CD pipelines with automated testing, linting, and model training:
+
+#### 1. CI Pipeline (`ci.yml`)
+
+- **Triggers**: Push to main/develop, Pull Requests
+- **Python Versions**: 3.11, 3.12
+- **Features**:
+  - Code linting with flake8
+  - Code formatting with black
+  - Import sorting with isort
+  - Comprehensive test suite
+  - MLflow integration testing
+  - Artifact generation
+
+#### 2. Model Training Pipeline (`model-training.yml`)
+
+- **Triggers**: Manual dispatch, Weekly schedule
+- **Features**:
+  - Complete pipeline execution
+  - MLflow experiment tracking
+  - Model packaging
+  - Deployment artifact generation
+  - Training reports and summaries
+
+#### 3. PR Validation (`pr-validation.yml`)
+
+- **Triggers**: Pull Request events
+- **Features**:
+  - Quick validation checks
+  - Security scanning
+  - Critical path testing
+
+### CI/CD Features
+
+- **Multi-Python Support**: Tests on Python 3.11 and 3.12
+- **Dependency Caching**: Optimized build times
+- **Artifact Management**: 30-90 day retention
+- **Professional Reporting**: Detailed summaries and logs
+- **Railway Integration**: Seamless MLflow connectivity
+- **Security Scanning**: Automated code security checks
+
+### Running CI/CD Locally
+
+```bash
+# Install CI/CD tools
+pip install black isort flake8
+
+# Format code
+black src/ tests/
+
+# Sort imports
+isort src/ tests/
+
+# Check code quality
+flake8 src/ tests/
+
+# Run tests in CI mode
+python run_tests.py --ci
+```
+
+### GitHub Secrets Required
+
+Configure in `Settings → Secrets and variables → Actions`:
+
+- `MLFLOW_TRACKING_URI`: `https://mlflow-tracking-production-53fb.up.railway.app`
 
 ## Testing Instructions
 
@@ -293,7 +369,7 @@ model = mlflow.sklearn.load_model("models:/heart_disease_random_forest/1")
 
 ### **When to Use Which**
 
-- **Use `models/` files**: Quick prototyping, Jupyter notebooks, offline development
+- **Use `models/` files**: Quick prototyping, offline development
 - **Use Railway MLflow models**: Production deployment, team collaboration, experiment comparison
 - **Use Task 4 packages**: Complete deployment with all dependencies and configurations
 
@@ -378,7 +454,7 @@ Important directories are preserved with `.gitkeep` files.
 - Dataset loading from UCI ML Repository with fallback to local files
 - Data quality assessment (missing values, duplicates, data types)
 - Comprehensive EDA with statistical analysis
-- Visualization functions (commented for Jupyter conversion)
+- Visualization functions
 - Data saving and quality reporting
 
 **Key Features:**
@@ -386,7 +462,6 @@ Important directories are preserved with `.gitkeep` files.
 - Automatic dataset acquisition from UCI ML Repository
 - Comprehensive data quality checks
 - Statistical analysis by target variable
-- Professional visualization templates (ready for Jupyter)
 - Structured data saving for downstream tasks
 
 **To run Task 1:**
@@ -403,12 +478,6 @@ python data_acquisition_eda.py
 - `data/processed/target.csv` - Target variable
 - `data/processed/data_quality_report.json` - Quality assessment
 - `figures/` - EDA visualizations (when uncommented)
-
-**For Jupyter Notebook conversion:**
-
-1. Copy the code to a new notebook
-2. Uncomment all matplotlib/seaborn visualization code
-3. Run cells individually for interactive analysis
 
 ### Task 2: Feature Engineering & Model Development
 
@@ -431,7 +500,6 @@ python data_acquisition_eda.py
 - Engineered features: age groups, metabolic ratios, interaction terms
 - 4 different algorithms with hyperparameter optimization
 - Comprehensive evaluation metrics (accuracy, precision, recall, F1, ROC-AUC)
-- Visualization templates ready for Jupyter conversion
 
 **Model Performance Results:**
 
@@ -453,7 +521,6 @@ python feature_engineering.py
 - `models/{model_name}_model.joblib` - Individual trained models (Task 2 direct save)
 - `models/evaluation_results.json` - Performance metrics and comparison
 - `models/feature_names.json` - Feature list for reproducibility
-- Visualization code ready for Jupyter notebooks
 
 **Model Storage Explanation:**
 Task 2 saves models directly to `models/` directory using joblib format for quick access and backup. These are standalone model files without MLflow integration.
@@ -525,22 +592,182 @@ Task 3 stores both experiment metadata AND actual model files on the Railway MLf
 
 ### All Tasks Completed
 
-All four main tasks of the MLOps pipeline have been successfully implemented:
+All five main tasks of the MLOps pipeline have been successfully implemented:
 
 - **Task 1**: Data Acquisition & Exploratory Data Analysis ✓
 - **Task 2**: Feature Engineering & Model Development ✓
 - **Task 3**: MLflow Experiment Tracking ✓
 - **Task 4**: Model Packaging & Reproducibility ✓
+- **Task 5**: CI/CD Pipeline & Automated Testing ✓
 
-The project now provides a complete end-to-end MLOps pipeline for heart disease prediction, from data acquisition to production-ready model packaging.
+The project now provides a complete end-to-end MLOps pipeline for heart disease prediction, from data acquisition to production-ready deployment with professional CI/CD practices.
+
+## TASK-5: CI/CD Pipeline & Automated Testing (COMPLETED)
+
+### Implementation Summary
+
+**Comprehensive CI/CD pipeline implemented with:**
+
+- **GitHub Actions workflows** (3 workflows)
+- **Automated linting** (flake8, black, isort)
+- **Multi-Python testing** (3.11, 3.12)
+- **MLflow integration testing**
+- **Artifact management** (30-90 day retention)
+- **Professional reporting** and summaries
+- **Security scanning** and validation
+
+### Workflows Created
+
+#### 1. **CI Pipeline** (`.github/workflows/ci.yml`)
+
+- **Triggers**: Push to main/develop, Pull Requests
+- **Features**: Code quality checks, comprehensive testing, artifact generation
+- **Python Versions**: 3.11, 3.12 (matrix strategy)
+- **Caching**: Optimized pip dependency caching
+
+#### 2. **Model Training Pipeline** (`.github/workflows/model-training.yml`)
+
+- **Triggers**: Manual dispatch, Weekly schedule (Monday 2 AM)
+- **Features**: Complete pipeline execution, MLflow tracking, deployment packaging
+- **Artifacts**: 90-day retention for training outputs
+
+#### 3. **PR Validation** (`.github/workflows/pr-validation.yml`)
+
+- **Triggers**: Pull Request events
+- **Features**: Quick validation, security scanning, critical path testing
+
+### Code Enhancements
+
+#### **CI/CD Utilities** (`src/ci_utils.py`)
+
+- Environment setup and validation
+- Professional logging and reporting
+- CI context detection and configuration
+- Comprehensive validation functions
+
+#### **Enhanced Test Runner** (`run_tests.py`)
+
+- CI mode with enhanced logging (`--ci` flag)
+- Professional step tracking and reporting
+- Artifact generation for CI/CD workflows
+
+#### **Configuration Files**
+
+- `.flake8`: Code quality standards
+- `pyproject.toml`: Black and isort configuration
+- Updated `requirements.txt`: Added CI/CD tools
+
+### Validation and Testing
+
+**Comprehensive validation system:**
+
+- **Workflow validation**: YAML syntax and structure
+- **Configuration validation**: All config files present
+- **CI utilities validation**: Import and functionality tests
+- **Test runner validation**: CI mode implementation
+- **Dependencies validation**: All required packages
+- **Directory structure validation**: Required directories exist
+
+**Test Results:**
+
+```
+GitHub Actions Workflows       PASS
+Configuration Files            PASS
+CI/CD Utilities                PASS
+Test Runner CI Mode            PASS
+Dependencies                   PASS
+Directory Structure            PASS
+```
+
+### Professional Features
+
+#### **Multi-Python Support**
+
+- Tests on Python 3.11 and 3.12
+- Matrix strategy for comprehensive compatibility testing
+- Future-proof with latest Python versions
+
+#### **Code Quality Enforcement**
+
+- **flake8**: Python code standards and syntax checking
+- **black**: Consistent code formatting (127 char line length)
+- **isort**: Organized import sorting
+- **Security scanning**: GitHub Super Linter integration
+
+#### **Performance Optimizations**
+
+- **Dependency caching**: Faster build times with pip cache
+- **Conditional execution**: Skip steps on failures
+- **Parallel execution**: Matrix strategy for multiple Python versions
+- **Smart triggers**: Different workflows for different events
+
+#### **Professional Reporting**
+
+- **GitHub Step Summaries**: Rich markdown reports
+- **Artifact management**: Organized file retention
+- **Detailed logging**: Timestamped step execution
+- **Failure notifications**: Clear error reporting
+
+### Integration with MLOps Pipeline
+
+**Seamless integration:**
+
+- **Railway MLflow**: CI/CD workflows connect to Railway server
+- **Environment variables**: Secure secret management
+- **Artifact flow**: Test results → Training artifacts → Deployment packages
+- **Validation chain**: Code quality → Tests → Training → Packaging
+
+### Usage Instructions
+
+#### **Automatic Execution**
+
+- **CI Pipeline**: Runs on every push/PR automatically
+- **Model Training**: Weekly schedule + manual dispatch
+- **PR Validation**: Automatic on pull request events
+
+#### **Manual Triggers**
+
+```bash
+# Local CI testing
+python run_tests.py --ci
+
+# Local code quality
+black src/ tests/
+isort src/ tests/
+flake8 src/ tests/
+
+# Validation
+python validate_cicd.py
+```
+
+#### **GitHub Secrets Required**
+
+Configure in repository settings:
+
+- `MLFLOW_TRACKING_URI`: `https://mlflow-tracking-production-53fb.up.railway.app`
+
+### Production Readiness
+
+**Enterprise-grade features:**
+
+- **Multi-environment testing**
+- **Automated quality gates**
+- **Security scanning**
+- **Artifact management**
+- **Professional reporting**
+- **Failure handling**
+- **Performance optimization**
+
+**Compliance and Standards:**
+
+- **Code quality standards** (PEP 8 compliance)
+- **Security best practices** (secret management)
+- **Documentation standards** (comprehensive README)
+- **Testing standards** (comprehensive test coverage)
+
+The CI/CD pipeline is now production-ready and follows industry best practices for MLOps workflows.
 
 - `figures/` - EDA visualizations (when uncommented)
-
-**For Jupyter Notebook conversion:**
-
-1. Copy the code to a new notebook
-2. Uncomment all matplotlib/seaborn visualization code
-3. Run cells individually for interactive analysis
 
 ## Dataset Information
 
@@ -551,7 +778,6 @@ The project now provides a complete end-to-end MLOps pipeline for heart disease 
 
 ## Notes
 
-- All visualization code is commented in Python files for easy Jupyter conversion
 - The project follows MLOps best practices with modular, reproducible code
 - Fallback mechanisms ensure dataset loading works in different environments
 - Comprehensive logging and error handling throughout

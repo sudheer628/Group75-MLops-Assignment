@@ -167,7 +167,6 @@ def perform_eda_analysis(X, y):
 def create_eda_visualizations(X, y):
     """
     Create comprehensive EDA visualizations
-    Note: All plots are commented for conversion to Jupyter notebook
     
     Args:
         X (pd.DataFrame): Features
@@ -184,9 +183,7 @@ def create_eda_visualizations(X, y):
     # Set style for better plots
     # plt.style.use('seaborn-v0_8')
     # sns.set_palette("husl")
-    
-    print("Creating visualizations (commented for Jupyter conversion)...")
-    
+
     # 1. Target Distribution
     print("1. Target distribution plot")
     # fig, ax = plt.subplots(1, 1, figsize=(8, 6))

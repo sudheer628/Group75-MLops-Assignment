@@ -337,7 +337,7 @@ def train_and_log_model(model_name, model, X_train, X_test, y_train, y_test,
 
 def create_confusion_matrix_plot(y_true, y_pred, model_name):
     """
-    Create confusion matrix plot (commented for Jupyter conversion)
+    Create confusion matrix plot (commented for Jupyter notebook)
     
     Args:
         y_true: True labels
@@ -347,7 +347,7 @@ def create_confusion_matrix_plot(y_true, y_pred, model_name):
     Returns:
         matplotlib.figure.Figure: Confusion matrix plot
     """
-    print(f"Creating confusion matrix plot for {model_name} (commented for Jupyter conversion)")
+    print(f"Creating confusion matrix plot for {model_name} (commented for Jupyter notebook)")
     
     # fig, ax = plt.subplots(figsize=(8, 6))
     # cm = confusion_matrix(y_true, y_pred)

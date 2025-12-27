@@ -1,0 +1,143 @@
+name: Model Training Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      retrain_models:
+        description: 'Force retrain all models'
+        required: false
+        default: false
+        type: boolean
+      experiment_name:
+        description: 'Custom experiment name'
+        required: false
+        default: 'ci-cd-training'
+        type: string
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM UTC
+
+jobs:
+  train-and-track:
+    name: Train Models and Track Experiments
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-training-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-training-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create required directories
+      run: |
+        mkdir -p data/raw data/processed models logs figures packages environments configs
+    
+    - name: Set training environment variables
+      run: |
+        echo "EXPERIMENT_NAME=${{ github.event.inputs.experiment_name || 'ci-cd-training' }}" >> $GITHUB_ENV
+        echo "RETRAIN_MODELS=${{ github.event.inputs.retrain_models || 'false' }}" >> $GITHUB_ENV
+        echo "GITHUB_RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
+        echo "GITHUB_SHA=${{ github.sha }}" >> $GITHUB_ENV
+    
+    - name: Run data acquisition and EDA
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        echo "Starting data acquisition..."
+        python src/data_acquisition_eda.py
+        echo "Data acquisition completed successfully"
+    
+    - name: Run feature engineering and model training
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        echo "Starting feature engineering and model training..."
+        python src/feature_engineering.py
+        echo "Local model training completed"
+    
+    - name: Upload models to MLflow (Railway)
+      env:
+        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        echo "Uploading models to Railway MLflow server..."
+        python src/experiment_tracking.py
+        echo "MLflow experiment tracking completed"
+    
+    - name: Package models for deployment
+      env:
+        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        echo "Creating deployment packages..."
+        python src/model_packaging.py
+        echo "Model packaging completed"
+    
+    - name: Validate training pipeline
+      env:
+        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        PYTHONPATH: ${{ github.workspace }}
+        CI: true
+      run: |
+        echo "Validating complete training pipeline..."
+        python run_tests.py --skip-validation
+        echo "Pipeline validation completed"
+    
+    - name: Upload training artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: training-artifacts-${{ github.run_id }}
+        path: |
+          models/
+          packages/
+          logs/
+          data/processed/
+          environments/
+          configs/
+        retention-days: 90
+    
+    - name: Generate training report
+      run: |
+        echo "## Model Training Report - Run #${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+        echo "### Training Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- **Experiment Name**: ${{ env.EXPERIMENT_NAME }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Retrain Models**: ${{ env.RETRAIN_MODELS }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Python Version**: 3.12" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit SHA**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Pipeline Steps" >> $GITHUB_STEP_SUMMARY
+        echo "- Success: Data Acquisition and EDA" >> $GITHUB_STEP_SUMMARY
+        echo "- Success: Feature Engineering and Model Training" >> $GITHUB_STEP_SUMMARY
+        echo "- Success: MLflow Experiment Tracking" >> $GITHUB_STEP_SUMMARY
+        echo "- Success: Model Packaging" >> $GITHUB_STEP_SUMMARY
+        echo "- Success: Pipeline Validation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Outputs" >> $GITHUB_STEP_SUMMARY
+        echo "- **MLflow Server**: [Railway MLflow](https://mlflow-tracking-production-53fb.up.railway.app)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Artifacts**: Available for 90 days" >> $GITHUB_STEP_SUMMARY
+        echo "- **Models**: Uploaded to Railway MLflow Registry" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "## Training Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+        echo "Check the logs above for detailed error information." >> $GITHUB_STEP_SUMMARY
+        echo "Common issues:" >> $GITHUB_STEP_SUMMARY
+        echo "- MLflow connection problems" >> $GITHUB_STEP_SUMMARY
+        echo "- Data download failures" >> $GITHUB_STEP_SUMMARY
+        echo "- Model training errors" >> $GITHUB_STEP_SUMMARY

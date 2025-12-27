@@ -350,6 +350,76 @@ def run_pytest():
         print(f"pytest execution failed: {e}")
         return False
 
+def run_ci_tests():
+    """Run tests in CI/CD mode with artifact generation"""
+    try:
+        from src.ci_utils import setup_ci_environment, generate_ci_report, validate_ci_environment, log_ci_step
+        
+        log_ci_step("CI/CD Test Pipeline", "started")
+        
+        # Setup CI environment
+        log_ci_step("Environment Setup", "started")
+        setup_ci_environment()
+        log_ci_step("Environment Setup", "completed")
+        
+        # Validate CI environment (skip conda check in CI)
+        log_ci_step("Environment Validation", "started")
+        if not validate_ci_environment():
+            log_ci_step("Environment Validation", "failed", "CI environment validation failed")
+            return False
+        log_ci_step("Environment Validation", "completed")
+        
+        # Run all tests
+        log_ci_step("Test Execution", "started")
+        success = True
+        
+        log_ci_step("Task 1 Tests", "started")
+        task1_success = run_task1_tests()
+        if task1_success:
+            log_ci_step("Task 1 Tests", "completed")
+        else:
+            log_ci_step("Task 1 Tests", "failed")
+            success = False
+        
+        log_ci_step("Task 2 Tests", "started")
+        task2_success = run_task2_tests()
+        if task2_success:
+            log_ci_step("Task 2 Tests", "completed")
+        else:
+            log_ci_step("Task 2 Tests", "failed")
+            success = False
+        
+        log_ci_step("Task 3 Tests", "started")
+        task3_success = run_task3_tests()
+        if task3_success:
+            log_ci_step("Task 3 Tests", "completed")
+        else:
+            log_ci_step("Task 3 Tests", "failed")
+            success = False
+        
+        log_ci_step("Task 4 Tests", "started")
+        task4_success = run_task4_tests()
+        if task4_success:
+            log_ci_step("Task 4 Tests", "completed")
+        else:
+            log_ci_step("Task 4 Tests", "failed")
+            success = False
+        
+        log_ci_step("Test Execution", "completed" if success else "failed")
+        
+        # Generate CI report
+        log_ci_step("Report Generation", "started")
+        report = generate_ci_report()
+        log_ci_step("Report Generation", "completed", f"Report saved to logs/ci_report.json")
+        
+        log_ci_step("CI/CD Test Pipeline", "completed" if success else "failed")
+        return success
+        
+    except Exception as e:
+        print(f"CI/CD test execution failed: {e}")
+        return False
+
+
 def main():
     """Main test runner function with validation"""
     parser = argparse.ArgumentParser(description="Run MLOps project validation and tests")
@@ -360,6 +430,7 @@ def main():
     parser.add_argument("--validate-only", action="store_true", help="Run only environment validation")
     parser.add_argument("--skip-validation", action="store_true", help="Skip validation, run tests only")
     parser.add_argument("--pytest", action="store_true", help="Run with pytest")
+    parser.add_argument("--ci", action="store_true", help="Run in CI/CD mode with enhanced logging and reporting")
     
     args = parser.parse_args()
     
@@ -369,6 +440,12 @@ def main():
     
     print("MLOps Heart Disease Project - Test Runner & Validator")
     print("=" * 70)
+    
+    # Handle CI mode first
+    if args.ci:
+        print("Running in CI/CD mode...")
+        success = run_ci_tests()
+        return 0 if success else 1
     
     # Run validation unless skipped
     validation_passed = True

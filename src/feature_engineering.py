@@ -471,7 +471,7 @@ def evaluate_models(tuned_models, X_train, X_test, y_train, y_test):
 def create_model_comparison_plots(evaluation_results, y_test):
     """
     Create comparison plots for model evaluation
-    Note: All plots are commented for conversion to Jupyter notebook
+    Note: All plots are commented for notebook to Jupyter notebook
     
     Args:
         evaluation_results (dict): Model evaluation results
@@ -481,7 +481,7 @@ def create_model_comparison_plots(evaluation_results, y_test):
     print("CREATING MODEL COMPARISON PLOTS")
     print("="*50)
     
-    print("Creating model comparison visualizations (commented for Jupyter conversion)...")
+    print("Creating model comparison visualizations (commented for Jupyter notebook)...")
     
     # 1. ROC Curves Comparison
     print("1. ROC curves comparison")
