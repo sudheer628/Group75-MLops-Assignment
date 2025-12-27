@@ -19,9 +19,9 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements-api.txt .
 
-# Install Python dependencies with stable versions
+# Install Python dependencies with Python 3.11 compatible versions
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir numpy==1.21.6 scikit-learn==1.1.3 && \
+    pip install --no-cache-dir numpy==1.24.3 scikit-learn==1.3.0 && \
     pip install --no-cache-dir -r requirements-api.txt
 
 # Copy application code
