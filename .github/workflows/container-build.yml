@@ -56,17 +56,14 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
         push: false
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        outputs: type=docker,dest=/tmp/heart-disease-api.tar
+        load: true
         
-    - name: Load Docker image
-      run: docker load --input /tmp/heart-disease-api.tar
-      
     - name: Test container
       run: |
         # Get the first tag for testing
