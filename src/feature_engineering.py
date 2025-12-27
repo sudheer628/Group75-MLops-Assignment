@@ -612,14 +612,39 @@ def save_models_and_results(evaluation_results, target_info, feature_names):
         'target_info': target_info,
         'feature_names': feature_names,
         'n_features': len(feature_names),
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now().isoformat(),
+        'random_seed': 42,  # For reproducibility
+        'model_version': 'local_dev'  # Distinguish from production versions
     }
     
     results_path = MODELS_DIR / "evaluation_results.json"
-    with open(results_path, 'w') as f:
-        json.dump(results_summary, f, indent=2, default=str)
     
-    print(f"Evaluation results saved to: {results_path}")
+    # For production: only save if metrics significantly changed
+    # This prevents Git noise from minor random variations
+    should_save_results = True
+    if results_path.exists():
+        try:
+            with open(results_path, 'r') as f:
+                existing_results = json.load(f)
+            
+            # Compare metrics (ignore timestamp)
+            if 'metadata' in existing_results:
+                existing_results['metadata'].pop('timestamp', None)
+            results_summary_copy = results_summary.copy()
+            results_summary_copy['metadata'].pop('timestamp', None)
+            
+            # Only save if there are meaningful changes
+            should_save_results = existing_results != results_summary_copy
+            
+        except (json.JSONDecodeError, FileNotFoundError):
+            should_save_results = True
+    
+    if should_save_results:
+        with open(results_path, 'w') as f:
+            json.dump(results_summary, f, indent=2, default=str)
+        print(f"Evaluation results updated and saved to: {results_path}")
+    else:
+        print(f"Evaluation results unchanged (ignoring timestamp), skipping save: {results_path}")
     
     # Save feature names for later use (only if changed)
     feature_names_path = MODELS_DIR / "feature_names.json"

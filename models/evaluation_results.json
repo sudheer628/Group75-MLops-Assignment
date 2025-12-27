@@ -73,6 +73,7 @@
       "cp_exang_interaction"
     ],
     "n_features": 19,
-    "timestamp": "2025-12-27T10:25:38.956483"
+    "random_seed": 42,
+    "model_version": "local_dev"
   }
 }
