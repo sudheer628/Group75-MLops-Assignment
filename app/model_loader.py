@@ -107,13 +107,42 @@ class ProductionModelLoader:
                 try:
                     import time
                     
-                    # Workaround for numpy._core issue
-                    import numpy as np
-                    # Force numpy to initialize properly
-                    _ = np.array([1, 2, 3])
+                    # Workaround for numpy._core issue - try alternative loading method
+                    logger.info("Attempting alternative model loading method...")
                     
-                    # Load model from MLflow
-                    model = mlflow.sklearn.load_model(champion_info['model_uri'])
+                    # Method 1: Try direct artifact download
+                    try:
+                        # Download artifacts directly instead of using mlflow.sklearn.load_model
+                        artifact_path = self.client.download_artifacts(champion_info['run_id'], "model")
+                        
+                        # Load the model using joblib directly from the downloaded artifacts
+                        import joblib
+                        model_file = Path(artifact_path) / "model.pkl"
+                        if not model_file.exists():
+                            # Try alternative model file names
+                            for alt_name in ["model.joblib", "sklearn_model.pkl", "model"]:
+                                alt_file = Path(artifact_path) / alt_name
+                                if alt_file.exists():
+                                    model_file = alt_file
+                                    break
+                        
+                        if model_file.exists():
+                            model = joblib.load(model_file)
+                            logger.info("Successfully loaded model using direct artifact download")
+                        else:
+                            raise FileNotFoundError("No model file found in artifacts")
+                            
+                    except Exception as direct_e:
+                        logger.warning(f"Direct artifact download failed: {direct_e}")
+                        
+                        # Method 2: Try MLflow model loading with numpy workaround
+                        import numpy as np
+                        # Force numpy to initialize properly
+                        _ = np.array([1, 2, 3])
+                        
+                        # Load model from MLflow
+                        model = mlflow.sklearn.load_model(champion_info['model_uri'])
+                        logger.info("Successfully loaded model using MLflow sklearn loader")
                     
                     # Save model locally using joblib
                     import joblib
