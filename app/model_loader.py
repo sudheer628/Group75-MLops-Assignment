@@ -3,8 +3,12 @@ Production model loader for downloading models from Railway MLflow server
 """
 import os
 import logging
+import warnings
 from pathlib import Path
 from typing import Optional
+
+# Suppress Pydantic model namespace warnings
+warnings.filterwarnings("ignore", message=".*Field.*has conflict with protected namespace.*")
 
 # Handle numpy import issues
 try:
@@ -102,6 +106,11 @@ class ProductionModelLoader:
             for attempt in range(max_retries):
                 try:
                     import time
+                    
+                    # Workaround for numpy._core issue
+                    import numpy as np
+                    # Force numpy to initialize properly
+                    _ = np.array([1, 2, 3])
                     
                     # Load model from MLflow
                     model = mlflow.sklearn.load_model(champion_info['model_uri'])
