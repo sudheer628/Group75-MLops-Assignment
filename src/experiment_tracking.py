@@ -278,7 +278,7 @@ def train_and_log_model(model_name, model, X_train, X_test, y_train, y_test,
                 # Log the saved model directory as artifact
                 mlflow.log_artifacts(model_path, "model")
                 
-                print(f"  ✓ Model artifacts logged successfully (Railway 2.10.0 compatible)")
+                print(f"  Model artifacts logged successfully (Railway 2.10.0 compatible)")
                 
                 # Try model registration using older API if needed
                 try:
@@ -291,14 +291,14 @@ def train_and_log_model(model_name, model, X_train, X_test, y_train, y_test,
                         model_uri=model_uri, 
                         name=registered_model_name
                     )
-                    print(f"  ✓ Model registered successfully: {registered_model_name}")
+                    print(f"  Model registered successfully: {registered_model_name}")
                 except Exception as reg_e:
-                    print(f"  ⚠ Model registration failed (continuing without registry): {reg_e}")
+                    print(f"  Model registration failed (continuing without registry): {reg_e}")
                     # Continue - model artifacts are still logged successfully
                     pass
                 
         except Exception as e:
-            print(f"  ⚠ Model logging failed: {e}")
+            print(f"  Model logging failed: {e}")
             # Continue without model logging
             pass
         

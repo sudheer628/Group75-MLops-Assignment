@@ -85,7 +85,7 @@ class ModelPackager:
         
     def get_champion_model_info(self) -> Dict[str, Any]:
         """
-        Get information about the champion model from MLflow registry
+        Get information about the champion model from MLflow runs
         
         Returns:
             Dict containing champion model information
@@ -95,74 +95,50 @@ class ModelPackager:
         print("="*50)
         
         try:
-            # Get all registered models (handle Railway compatibility)
-            try:
-                registered_models = self.client.search_registered_models()
-            except Exception as e:
-                print(f"Warning: Could not access MLflow registry: {e}")
-                print("Falling back to local model evaluation...")
-                # Fallback to local model files
-                return self._get_local_champion_model()
+            # Get the heart disease comparison experiment
+            experiment = self.client.get_experiment_by_name('heart_disease_comparison')
+            if not experiment:
+                raise ValueError("Experiment 'heart_disease_comparison' not found. Please run Task 3 first.")
             
-            if not registered_models:
-                print("No registered models found in MLflow registry")
-                print("Falling back to local model evaluation...")
-                return self._get_local_champion_model()
+            # Get all runs from the experiment
+            runs = self.client.search_runs(
+                experiment_ids=[experiment.experiment_id],
+                max_results=50
+            )
             
+            if not runs:
+                raise ValueError("No runs found in the experiment. Please run Task 3 first.")
+            
+            # Find the best model from training runs
             champion_info = None
             best_performance = 0
             
-            # Find model with champion alias or best performance
-            for model in registered_models:
-                model_name = model.name
-                
-                try:
-                    # Try to get champion alias first
-                    champion_version = self.client.get_model_version_by_alias(
-                        name=model_name, alias="champion"
-                    )
-                    
-                    # Get run info for performance metrics
-                    run = self.client.get_run(champion_version.run_id)
+            for run in runs:
+                stage = run.data.tags.get('stage', '')
+                if stage == 'model_training':
+                    model_type = run.data.params.get('model_type', 'unknown')
                     roc_auc = run.data.metrics.get('roc_auc', 0)
+                    accuracy = run.data.metrics.get('accuracy', 0)
                     
                     if roc_auc > best_performance:
                         best_performance = roc_auc
                         champion_info = {
-                            'model_name': model_name,
-                            'version': champion_version.version,
-                            'run_id': champion_version.run_id,
+                            'model_name': f"heart_disease_{model_type}",
+                            'version': '1',
+                            'run_id': run.info.run_id,
                             'roc_auc': roc_auc,
-                            'has_champion_alias': True,
-                            'model_uri': f"models:/{model_name}/{champion_version.version}"
+                            'accuracy': accuracy,
+                            'has_champion_alias': False,
+                            'model_uri': f"runs:/{run.info.run_id}/model"
                         }
-                    
-                except Exception:
-                    # No champion alias, get latest version
-                    latest_versions = self.client.get_latest_versions(model_name)
-                    if latest_versions:
-                        latest_version = latest_versions[0]
-                        run = self.client.get_run(latest_version.run_id)
-                        roc_auc = run.data.metrics.get('roc_auc', 0)
-                        
-                        if roc_auc > best_performance:
-                            best_performance = roc_auc
-                            champion_info = {
-                                'model_name': model_name,
-                                'version': latest_version.version,
-                                'run_id': latest_version.run_id,
-                                'roc_auc': roc_auc,
-                                'has_champion_alias': False,
-                                'model_uri': f"models:/{model_name}/{latest_version.version}"
-                            }
             
             if not champion_info:
-                raise ValueError("Could not identify champion model")
+                raise ValueError("Could not identify champion model from training runs")
             
             print(f"Champion Model: {champion_info['model_name']}")
-            print(f"Version: {champion_info['version']}")
+            print(f"Run ID: {champion_info['run_id']}")
             print(f"ROC-AUC: {champion_info['roc_auc']:.4f}")
-            print(f"Has Champion Alias: {champion_info['has_champion_alias']}")
+            print(f"Model URI: {champion_info['model_uri']}")
             
             return champion_info
             
@@ -222,43 +198,63 @@ class ModelPackager:
         exported_files = {}
         
         try:
-            # Load model from MLflow (handle Railway compatibility)
+            # Load model from MLflow with retry logic for Railway
             model_uri = model_info['model_uri']
-            try:
-                mlflow_model = mlflow.sklearn.load_model(model_uri)
-            except Exception as e:
-                print(f"Warning: Could not load model from MLflow registry: {e}")
-                print("Falling back to local model files...")
-                # Fallback to local model files if MLflow registry fails
-                from pathlib import Path
-                best_model_path = Path("models/best_model.joblib")
-                if best_model_path.exists():
-                    import joblib
-                    mlflow_model = joblib.load(best_model_path)
-                    print("✓ Loaded model from local files")
-                else:
-                    raise ValueError("No model available from MLflow or local files")
+            print(f"Loading model from Railway: {model_uri}")
             
-            # Create complete pipeline (preprocessing + model)
+            # Add timeout and retry for Railway downloads
+            import time
+            max_retries = 3
+            retry_delay = 5
+            
+            for attempt in range(max_retries):
+                try:
+                    mlflow_model = mlflow.sklearn.load_model(model_uri)
+                    print(f"Successfully loaded model from Railway (attempt {attempt + 1})")
+                    break
+                except Exception as download_e:
+                    if attempt < max_retries - 1:
+                        print(f"Download attempt {attempt + 1} failed: {download_e}")
+                        print(f"Retrying in {retry_delay} seconds...")
+                        time.sleep(retry_delay)
+                    else:
+                        raise download_e
+            
+            # The Railway model expects engineered features, so we need to use the original
+            # preprocessing pipeline that includes feature engineering
             complete_pipeline = Pipeline([
                 ('preprocessing', preprocessing_pipeline),
                 ('model', mlflow_model)
             ])
             
-            # 1. Joblib format (recommended for scikit-learn)
+            # 1. Joblib format (recommended for scikit-learn) - save model only to avoid custom transformer issues
             joblib_path = output_dir / "model.joblib"
-            joblib.dump(complete_pipeline, joblib_path)
+            joblib.dump(mlflow_model, joblib_path)  # Save only the model, not the complete pipeline
             exported_files['joblib'] = str(joblib_path)
-            print(f"✓ Joblib format: {joblib_path}")
+            print(f"Joblib format: {joblib_path}")
             
-            # 2. Pickle format (universal Python)
+            # 2. Pickle format (universal Python) - save model only
             pickle_path = output_dir / "model.pkl"
             with open(pickle_path, 'wb') as f:
-                pickle.dump(complete_pipeline, f)
+                pickle.dump(mlflow_model, f)  # Save only the model
             exported_files['pickle'] = str(pickle_path)
-            print(f"✓ Pickle format: {pickle_path}")
+            print(f"Pickle format: {pickle_path}")
             
-            # 3. MLflow format (with metadata)
+            # 3. Complete pipeline with custom transformers (separate file with import handling)
+            complete_pipeline_path = output_dir / "complete_pipeline.joblib"
+            try:
+                complete_pipeline = Pipeline([
+                    ('preprocessing', preprocessing_pipeline),
+                    ('model', mlflow_model)
+                ])
+                joblib.dump(complete_pipeline, complete_pipeline_path)
+                exported_files['complete_pipeline'] = str(complete_pipeline_path)
+                print(f"Complete pipeline: {complete_pipeline_path}")
+            except Exception as e:
+                print(f"Warning: Complete pipeline export failed: {e}")
+                # Continue without complete pipeline
+            
+            # 4. MLflow format (with metadata)
             mlflow_path = output_dir / "mlflow_model"
             try:
                 # For MLflow, save the original model without custom preprocessing
@@ -272,23 +268,23 @@ class ModelPackager:
                     )
                 )
                 exported_files['mlflow'] = str(mlflow_path)
-                print(f"✓ MLflow format: {mlflow_path}")
+                print(f"MLflow format: {mlflow_path}")
             except Exception as e:
                 print(f"Warning: MLflow format export failed: {e}")
                 print("Continuing with other formats...")
                 # Don't add to exported_files if it failed
             
-            # 4. Separate preprocessing pipeline
+            # 5. Separate preprocessing pipeline
             preprocessing_path = output_dir / "preprocessing_pipeline.joblib"
             joblib.dump(preprocessing_pipeline, preprocessing_path)
             exported_files['preprocessing'] = str(preprocessing_path)
-            print(f"✓ Preprocessing pipeline: {preprocessing_path}")
+            print(f"Preprocessing pipeline: {preprocessing_path}")
             
-            # 5. Model only (without preprocessing)
+            # 6. Model only (without preprocessing)
             model_only_path = output_dir / "model_only.joblib"
             joblib.dump(mlflow_model, model_only_path)
             exported_files['model_only'] = str(model_only_path)
-            print(f"✓ Model only: {model_only_path}")
+            print(f"Model only: {model_only_path}")
             
             print(f"\nExported {len(exported_files)} model formats successfully")
             return exported_files
@@ -389,7 +385,7 @@ class ModelPackager:
             with open(pip_file, 'w') as f:
                 f.write(pip_requirements.stdout)
             env_files['pip_exact'] = str(pip_file)
-            print(f"✓ Exact pip requirements: {pip_file}")
+            print(f"Exact pip requirements: {pip_file}")
             
             # 2. Conda environment (if available)
             try:
@@ -403,7 +399,7 @@ class ModelPackager:
                 with open(conda_file, 'w') as f:
                     f.write(conda_env.stdout)
                 env_files['conda'] = str(conda_file)
-                print(f"✓ Conda environment: {conda_file}")
+                print(f"Conda environment: {conda_file}")
                 
             except (subprocess.CalledProcessError, FileNotFoundError):
                 print("Conda not available, skipping conda environment export")
@@ -425,7 +421,7 @@ class ModelPackager:
             with open(system_file, 'w') as f:
                 json.dump(system_info, f, indent=2)
             env_files['system_info'] = str(system_file)
-            print(f"✓ System information: {system_file}")
+            print(f"System information: {system_file}")
             
             # 4. Core requirements (minimal for deployment)
             core_requirements = [
@@ -440,7 +436,7 @@ class ModelPackager:
             with open(core_file, 'w') as f:
                 f.write('\n'.join(core_requirements))
             env_files['core_requirements'] = str(core_file)
-            print(f"✓ Core requirements: {core_file}")
+            print(f"Core requirements: {core_file}")
             
             print(f"\nEnvironment snapshot created with {len(env_files)} files")
             return env_files
@@ -536,37 +532,43 @@ class ModelPackager:
         validation_results = {}
         
         try:
-            # 1. Test model loading (joblib)
+            # 1. Test model loading (joblib) - now tests model only
             print("Testing joblib model loading...")
             joblib_path = package_dir / "model.joblib"
             if joblib_path.exists():
                 model = joblib.load(joblib_path)
                 validation_results['joblib_loading'] = True
-                print("✓ Joblib model loads successfully")
+                print("Joblib model loads successfully")
             else:
                 validation_results['joblib_loading'] = False
-                print("✗ Joblib model file not found")
+                print("Joblib model file not found")
             
-            # 2. Test model prediction
+            # 2. Test model prediction with engineered features
             print("Testing model prediction...")
             try:
-                # Create sample input data
+                # Create sample input data with engineered features (19 features total)
+                import pandas as pd
+                import numpy as np
+                
+                # Create sample with all 19 features that the model expects
                 sample_data = pd.DataFrame({
                     'age': [55], 'sex': [1], 'cp': [3], 'trestbps': [140],
                     'chol': [250], 'fbs': [0], 'restecg': [1], 'thalach': [150],
-                    'exang': [0], 'oldpeak': [1.5], 'slope': [2], 'ca': [0], 'thal': [3]
+                    'exang': [0], 'oldpeak': [1.5], 'slope': [2], 'ca': [0], 'thal': [3],
+                    'age_group': [2], 'chol_age_ratio': [4.5], 'heart_rate_reserve': [15],
+                    'risk_score': [50], 'age_sex_interaction': [55], 'cp_exang_interaction': [0]
                 })
                 
                 prediction = model.predict(sample_data)
                 probabilities = model.predict_proba(sample_data)
                 
                 validation_results['prediction_test'] = True
-                print(f"✓ Model prediction successful: {prediction[0]}")
-                print(f"✓ Prediction probabilities: {probabilities[0]}")
+                print(f"Model prediction successful: {prediction[0]}")
+                print(f"Prediction probabilities: {probabilities[0]}")
                 
             except Exception as e:
                 validation_results['prediction_test'] = False
-                print(f"✗ Model prediction failed: {e}")
+                print(f"Model prediction failed: {e}")
             
             # 3. Test MLflow model loading
             print("Testing MLflow model loading...")
@@ -575,13 +577,13 @@ class ModelPackager:
                 try:
                     mlflow_model = mlflow.sklearn.load_model(str(mlflow_path))
                     validation_results['mlflow_loading'] = True
-                    print("✓ MLflow model loads successfully")
+                    print("MLflow model loads successfully")
                 except Exception as e:
                     validation_results['mlflow_loading'] = False
-                    print(f"✗ MLflow model loading failed: {e}")
+                    print(f"MLflow model loading failed: {e}")
             else:
                 validation_results['mlflow_loading'] = False
-                print("✗ MLflow model directory not found (this is acceptable if MLflow export failed)")
+                print("MLflow model directory not found (this is acceptable if MLflow export failed)")
             
             # 4. Validate configuration files
             print("Validating configuration files...")
@@ -591,9 +593,9 @@ class ModelPackager:
             for config_file in config_files:
                 config_path = package_dir / config_file
                 if config_path.exists():
-                    print(f"✓ {config_file} exists")
+                    print(f"{config_file} exists")
                 else:
-                    print(f"✗ {config_file} missing")
+                    print(f"{config_file} missing")
                     config_validation = False
             
             validation_results['configuration_files'] = config_validation
@@ -609,10 +611,10 @@ class ModelPackager:
             print(f"\nValidation Summary:")
             for test, result in validation_results.items():
                 if test != 'overall':
-                    status = "✓ PASS" if result else "✗ FAIL"
+                    status = "PASS" if result else "FAIL"
                     print(f"  {test}: {status}")
             
-            print(f"\nOverall Status: {'✓ PASS' if validation_results['overall'] else '✗ FAIL'}")
+            print(f"\nOverall Status: {'PASS' if validation_results['overall'] else 'FAIL'}")
             if core_functionality and not all_passed:
                 print("Note: Core functionality (joblib + prediction) works. MLflow issues are non-critical.")
             
@@ -878,62 +880,6 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
         X_eng['cp_exang_interaction'] = X_eng['cp'] * X_eng['exang']
         
         return X_eng
-    
-    def _get_local_champion_model(self) -> Dict[str, Any]:
-        """
-        Fallback method to get champion model from local files
-        
-        Returns:
-            Dict containing champion model information
-        """
-        print("Using local model evaluation as fallback...")
-        
-        try:
-            # Load evaluation results from Task 2
-            eval_results_path = Path("models/evaluation_results.json")
-            if eval_results_path.exists():
-                with open(eval_results_path, 'r') as f:
-                    eval_results = json.load(f)
-                
-                # Find best model from evaluation results
-                best_model_name = eval_results.get('best_model', 'logistic_regression')
-                best_roc_auc = eval_results.get('best_roc_auc', 0.95)
-                
-                champion_info = {
-                    'model_name': f"heart_disease_{best_model_name}",
-                    'version': '1',
-                    'run_id': 'local_fallback',
-                    'roc_auc': best_roc_auc,
-                    'has_champion_alias': False,
-                    'model_uri': f"models/{best_model_name}_model.joblib"
-                }
-                
-                print(f"Local Champion Model: {champion_info['model_name']}")
-                print(f"ROC-AUC: {champion_info['roc_auc']:.4f}")
-                
-                return champion_info
-            else:
-                # Default fallback
-                return {
-                    'model_name': 'heart_disease_best_model',
-                    'version': '1',
-                    'run_id': 'local_fallback',
-                    'roc_auc': 0.95,
-                    'has_champion_alias': False,
-                    'model_uri': 'models/best_model.joblib'
-                }
-                
-        except Exception as e:
-            print(f"Error in local fallback: {e}")
-            # Final fallback
-            return {
-                'model_name': 'heart_disease_best_model',
-                'version': '1',
-                'run_id': 'local_fallback',
-                'roc_auc': 0.95,
-                'has_champion_alias': False,
-                'model_uri': 'models/best_model.joblib'
-            }
 
 
 def main():
