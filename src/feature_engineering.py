@@ -621,12 +621,26 @@ def save_models_and_results(evaluation_results, target_info, feature_names):
     
     print(f"Evaluation results saved to: {results_path}")
     
-    # Save feature names for later use
+    # Save feature names for later use (only if changed)
     feature_names_path = MODELS_DIR / "feature_names.json"
-    with open(feature_names_path, 'w') as f:
-        json.dump(feature_names, f, indent=2)
     
-    print(f"Feature names saved to: {feature_names_path}")
+    # Check if file exists and content is the same
+    should_save = True
+    if feature_names_path.exists():
+        try:
+            with open(feature_names_path, 'r') as f:
+                existing_names = json.load(f)
+            # Only save if content is different (preserve original order)
+            should_save = existing_names != feature_names
+        except (json.JSONDecodeError, FileNotFoundError):
+            should_save = True
+    
+    if should_save:
+        with open(feature_names_path, 'w') as f:
+            json.dump(feature_names, f, indent=2)
+        print(f"Feature names updated and saved to: {feature_names_path}")
+    else:
+        print(f"Feature names unchanged, skipping save: {feature_names_path}")
 
 def main():
     """
