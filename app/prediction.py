@@ -35,6 +35,10 @@ class HeartDiseasePredictor:
     def load_model(self) -> None:
         """Load the trained model and preprocessing pipeline"""
         try:
+            logger.info("Starting model loading process...")
+            logger.info(f"Python version info: {__import__('sys').version}")
+            logger.info(f"Numpy version: {np.__version__}")
+            
             # First, try to ensure model is available (download if necessary)
             from .model_loader import ProductionModelLoader
             
@@ -47,8 +51,9 @@ class HeartDiseasePredictor:
             
             # Load main model
             if Path(settings.MODEL_PATH).exists():
+                logger.info(f"Loading model from {settings.MODEL_PATH}")
                 self.model = joblib.load(settings.MODEL_PATH)
-                logger.info(f"Model loaded from {settings.MODEL_PATH}")
+                logger.info(f"Model loaded successfully: {type(self.model).__name__}")
             else:
                 logger.error(f"Model file not found: {settings.MODEL_PATH}")
                 logger.info("Available files in models directory:")
@@ -70,6 +75,9 @@ class HeartDiseasePredictor:
                 
         except Exception as e:
             logger.error(f"Error loading model: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise
     
     def preprocess_input(self, input_data: PredictionInput) -> pd.DataFrame:

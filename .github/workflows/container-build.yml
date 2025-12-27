@@ -75,7 +75,7 @@ jobs:
         
         # Wait for startup and model download from Railway
         echo "Waiting for container startup and model download from Railway..."
-        sleep 45
+        sleep 60
         
         # Check if container is running
         if ! docker ps | grep test-container; then

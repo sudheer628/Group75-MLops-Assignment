@@ -1,22 +1,10 @@
 """
-Production model loader for downloading models from Railway MLflow server
+Simplified model loader for Python 3.10 compatibility
 """
-import os
 import logging
-import warnings
 from pathlib import Path
-from typing import Optional
 
-# Suppress Pydantic model namespace warnings
-warnings.filterwarnings("ignore", message=".*Field.*has conflict with protected namespace.*")
-
-# Handle numpy import issues
-try:
-    import numpy as np
-except ImportError as e:
-    logging.error(f"Numpy import failed: {e}")
-    raise
-
+import numpy as np
 import mlflow
 import mlflow.sklearn
 from mlflow import MlflowClient
@@ -25,192 +13,84 @@ logger = logging.getLogger(__name__)
 
 
 class ProductionModelLoader:
-    """Load models from Railway MLflow server for production deployment"""
+    """Simplified model loader for Railway MLflow server"""
     
     def __init__(self):
-        # Set Railway MLflow server as tracking URI
         self.railway_mlflow_uri = "https://mlflow-tracking-production-53fb.up.railway.app"
         mlflow.set_tracking_uri(self.railway_mlflow_uri)
         self.client = MlflowClient()
         
     def download_champion_model(self, local_model_path: str = "models/best_model.joblib") -> bool:
-        """
-        Download the champion model from Railway MLflow server
-        
-        Args:
-            local_model_path: Local path to save the model
-            
-        Returns:
-            True if successful, False otherwise
-        """
+        """Download the champion model from Railway MLflow server"""
         try:
+            logger.info("=== Model Download Process Starting ===")
+            logger.info(f"Python version: {__import__('sys').version}")
+            logger.info(f"Numpy version: {np.__version__}")
+            logger.info(f"MLflow version: {mlflow.__version__}")
             logger.info("Connecting to Railway MLflow server...")
-            logger.info(f"MLflow URI: {self.railway_mlflow_uri}")
             
-            # Get the heart disease comparison experiment
+            # Get the experiment
             experiment = self.client.get_experiment_by_name("heart_disease_comparison")
             if not experiment:
-                logger.error("Experiment 'heart_disease_comparison' not found on Railway server")
+                logger.error("Experiment not found")
                 return False
                 
-            logger.info(f"Found experiment: {experiment.name}")
-            
-            # Get all runs from the experiment
+            # Get all runs
             runs = self.client.search_runs(experiment_ids=[experiment.experiment_id], max_results=50)
-            
             if not runs:
-                logger.error("No runs found in the experiment")
+                logger.error("No runs found")
                 return False
                 
-            logger.info(f"Found {len(runs)} runs in experiment")
-            
-            # Find the best model from training runs
+            # Find best model
             champion_info = None
             best_performance = 0
             
             for run in runs:
-                stage = run.data.tags.get("stage", "")
-                if stage == "model_training":
-                    model_type = run.data.params.get("model_type", "unknown")
+                if run.data.tags.get("stage") == "model_training":
                     roc_auc = run.data.metrics.get("roc_auc", 0)
-                    
-                    logger.info(f"Found model: {model_type}, ROC-AUC: {roc_auc:.4f}")
-                    
                     if roc_auc > best_performance:
                         best_performance = roc_auc
                         champion_info = {
-                            "model_type": f"heart_disease_{model_type}",
                             "run_id": run.info.run_id,
-                            "roc_auc": roc_auc,
-                            "model_uri": f"runs:/{run.info.run_id}/model",
+                            "model_uri": f"runs:/{run.info.run_id}/model"
                         }
             
             if not champion_info:
-                logger.error("Could not identify champion model from training runs")
+                logger.error("No champion model found")
                 return False
                 
-            logger.info(f"Champion model identified: {champion_info['model_type']}")
-            logger.info(f"ROC-AUC: {champion_info['roc_auc']:.4f}")
-            logger.info(f"Run ID: {champion_info['run_id']}")
+            logger.info(f"Champion model ROC-AUC: {best_performance:.4f}")
+            logger.info(f"Model URI: {champion_info['model_uri']}")
             
-            # Download the model
-            logger.info(f"Downloading model from: {champion_info['model_uri']}")
-            
-            # Create models directory if it doesn't exist
+            # Create directory
             Path(local_model_path).parent.mkdir(parents=True, exist_ok=True)
             
-            # Download with retry logic for Railway
-            max_retries = 3
-            retry_delay = 5
+            # Download model using basic MLflow loading
+            logger.info("Loading model from MLflow...")
+            model = mlflow.sklearn.load_model(champion_info['model_uri'])
+            logger.info(f"Model loaded successfully: {type(model).__name__}")
             
-            for attempt in range(max_retries):
-                try:
-                    import time
-                    
-                    # Workaround for numpy._core issue - try alternative loading method
-                    logger.info("Attempting alternative model loading method...")
-                    
-                    # Method 1: Try direct artifact download
-                    try:
-                        # Download artifacts directly instead of using mlflow.sklearn.load_model
-                        artifact_path = self.client.download_artifacts(champion_info['run_id'], "model")
-                        
-                        # Load the model using joblib directly from the downloaded artifacts
-                        import joblib
-                        model_file = Path(artifact_path) / "model.pkl"
-                        if not model_file.exists():
-                            # Try alternative model file names
-                            for alt_name in ["model.joblib", "sklearn_model.pkl", "model"]:
-                                alt_file = Path(artifact_path) / alt_name
-                                if alt_file.exists():
-                                    model_file = alt_file
-                                    break
-                        
-                        if model_file.exists():
-                            model = joblib.load(model_file)
-                            logger.info("Successfully loaded model using direct artifact download")
-                        else:
-                            raise FileNotFoundError("No model file found in artifacts")
-                            
-                    except Exception as direct_e:
-                        logger.warning(f"Direct artifact download failed: {direct_e}")
-                        
-                        # Method 2: Try MLflow model loading with numpy workaround
-                        import numpy as np
-                        # Force numpy to initialize properly
-                        _ = np.array([1, 2, 3])
-                        
-                        # Load model from MLflow
-                        model = mlflow.sklearn.load_model(champion_info['model_uri'])
-                        logger.info("Successfully loaded model using MLflow sklearn loader")
-                    
-                    # Save model locally using joblib
-                    import joblib
-                    joblib.dump(model, local_model_path)
-                    
-                    logger.info(f"Model successfully downloaded and saved to: {local_model_path}")
-                    
-                    # Verify the model file exists and is valid
-                    if Path(local_model_path).exists():
-                        # Test loading the saved model
-                        test_model = joblib.load(local_model_path)
-                        logger.info("Model verification successful")
-                        return True
-                    else:
-                        logger.error("Model file was not created successfully")
-                        return False
-                        
-                except Exception as download_e:
-                    if attempt < max_retries - 1:
-                        logger.warning(f"Download attempt {attempt + 1} failed: {download_e}")
-                        logger.info(f"Retrying in {retry_delay} seconds...")
-                        time.sleep(retry_delay)
-                    else:
-                        logger.error(f"All download attempts failed: {download_e}")
-                        return False
-                        
+            # Save using joblib
+            import joblib
+            logger.info(f"Saving model to: {local_model_path}")
+            joblib.dump(model, local_model_path)
+            
+            logger.info("=== Model Download Process Completed Successfully ===")
+            return True
+            
         except Exception as e:
-            logger.error(f"Error downloading champion model: {e}")
+            logger.error(f"=== Model Download Process Failed ===")
+            logger.error(f"Error: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
             
     def ensure_model_available(self, model_path: str = "models/best_model.joblib") -> bool:
-        """
-        Ensure model is available locally, download if necessary
-        
-        Args:
-            model_path: Path to the model file
-            
-        Returns:
-            True if model is available, False otherwise
-        """
-        # Check if model already exists locally
+        """Ensure model is available locally"""
         if Path(model_path).exists():
-            logger.info(f"Model already exists locally: {model_path}")
+            logger.info(f"Model exists: {model_path}")
             return True
             
-        # Try to download from Railway
-        logger.info("Model not found locally, attempting to download from Railway MLflow server...")
+        logger.info("Downloading model from Railway...")
         return self.download_champion_model(model_path)
-
-
-def download_model_for_container():
-    """
-    Standalone function to download model for container deployment
-    This can be called during container startup or build process
-    """
-    loader = ProductionModelLoader()
-    
-    # Try to download the model
-    success = loader.ensure_model_available()
-    
-    if success:
-        print("Model successfully downloaded from Railway MLflow server")
-        return True
-    else:
-        print("Failed to download model from Railway MLflow server")
-        return False
-
-
-if __name__ == "__main__":
-    # Allow running this script directly to download models
-    download_model_for_container()
