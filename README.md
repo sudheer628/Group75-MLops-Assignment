@@ -37,7 +37,6 @@ This project implements an end-to-end MLOps pipeline for heart disease predictio
 │   ├── test_task3_experiment_tracking.py
 │   ├── test_task4_model_packaging.py
 │   ├── validate_cicd.py          # CI/CD validation script
-│   ├── test-api-cloud.sh         # Cloud-based API testing
 │   ├── sample-input.json         # High-risk test case
 │   └── sample-input-healthy.json # Low-risk test case
 ├── Dockerfile                    # Container definition
@@ -642,10 +641,6 @@ git push
 ```bash
 # Open repository in Codespaces (see CODESPACES.md)
 # Docker and all dependencies pre-installed
-
-# Test the API
-chmod +x tests/test-api-cloud.sh
-./tests/test-api-cloud.sh
 
 # Access API documentation at forwarded port
 ```

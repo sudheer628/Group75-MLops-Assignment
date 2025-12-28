@@ -182,32 +182,6 @@ Helper functions:
 
 - Added `prometheus-client>=0.19.0` dependency
 
-### Step 3.2: Push Code Changes to GitHub
-
-```bash
-# From your local machine
-git add app/metrics.py
-git add app/main.py
-git add requirements-api.txt
-git commit -m "TASK-8: Add Prometheus metrics for Grafana Cloud monitoring"
-git push origin main
-```
-
-**Expected**: GitHub Actions CI/CD pipeline runs and passes all checks
-
----
-
-## Phase 3.3: Wait for CI/CD Pipeline
-
-**What happens**:
-
-1. Code linting (black, isort, flake8)
-2. Tests run
-3. Docker image builds
-4. Image pushed to GHCR
-
-**Expected**: All checks pass ✓
-
 ---
 
 ## Phase 4: Configure Alloy to Scrape Metrics (10 minutes)

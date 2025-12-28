@@ -8,11 +8,11 @@ Usage:
     OR from root: python -m tests.validate_cicd
 """
 
+import json
 import os
 import sys
-from pathlib import Path
 import yaml
-import json
+from pathlib import Path
 
 
 def get_root_dir():
@@ -99,8 +99,8 @@ def validate_ci_utilities():
     try:
         sys.path.insert(0, str(root))
         from src.ci_utils import (
-            setup_ci_environment,
             generate_ci_report,
+            setup_ci_environment,
             validate_ci_environment,
         )
 
