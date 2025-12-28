@@ -53,20 +53,12 @@ except ImportError:
 
 # Set up directories
 MODELS_DIR = Path("models")
-PRODUCTION_DIR = MODELS_DIR / "production"
-EXPERIMENTS_DIR = MODELS_DIR / "experiments"
-ARCHIVED_DIR = MODELS_DIR / "archived"
-VALIDATION_DIR = MODELS_DIR / "validation"
 ENVIRONMENTS_DIR = Path("environments")
 PACKAGES_DIR = Path("packages")
 
 # Create directories
 for directory in [
     MODELS_DIR,
-    PRODUCTION_DIR,
-    EXPERIMENTS_DIR,
-    ARCHIVED_DIR,
-    VALIDATION_DIR,
     ENVIRONMENTS_DIR,
     PACKAGES_DIR,
 ]:

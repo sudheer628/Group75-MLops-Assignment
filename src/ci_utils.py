@@ -23,10 +23,6 @@ def setup_ci_environment():
         "data/raw",
         "data/processed",
         "models",
-        "models/experiments",
-        "models/production",
-        "models/validation",
-        "models/archived",
         "packages",
         "environments",
     ]

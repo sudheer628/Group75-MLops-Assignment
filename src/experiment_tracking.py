@@ -59,11 +59,9 @@ except ImportError:
 
 # Set up local directories (for models only)
 MODELS_DIR = Path("models")
-EXPERIMENTS_DIR = Path("experiments")
 
 # Create directories if they don't exist (no mlruns - using Railway)
-for directory in [MODELS_DIR, EXPERIMENTS_DIR]:
-    directory.mkdir(exist_ok=True)
+MODELS_DIR.mkdir(exist_ok=True)
 
 
 def setup_mlflow():
