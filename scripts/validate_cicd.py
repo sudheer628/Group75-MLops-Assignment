@@ -2,6 +2,10 @@
 """
 CI/CD Pipeline Validation Script
 Validates that all CI/CD components are properly configured
+
+Usage:
+    python scripts/validate_cicd.py
+    OR from root: python -m scripts.validate_cicd
 """
 
 import os
@@ -11,11 +15,23 @@ import yaml
 import json
 
 
+def get_root_dir():
+    """Get the project root directory"""
+    # If running from scripts/, go up one level
+    script_dir = Path(__file__).parent
+    if script_dir.name == 'scripts':
+        return script_dir.parent
+    # If running from root, use current directory
+    return Path.cwd()
+
+
 def validate_workflow_files():
     """Validate GitHub Actions workflow files"""
     print("Validating GitHub Actions workflows...")
     
-    workflows_dir = Path('.github/workflows')
+    root = get_root_dir()
+    workflows_dir = root / '.github' / 'workflows'
+    
     if not workflows_dir.exists():
         print(".github/workflows directory not found")
         return False
@@ -49,6 +65,7 @@ def validate_configuration_files():
     """Validate configuration files"""
     print("\nValidating configuration files...")
     
+    root = get_root_dir()
     config_files = {
         '.flake8': 'Flake8 configuration',
         'pyproject.toml': 'Black/isort configuration',
@@ -58,7 +75,7 @@ def validate_configuration_files():
     all_valid = True
     
     for file_path, description in config_files.items():
-        if Path(file_path).exists():
+        if (root / file_path).exists():
             print(f"{file_path} - {description}")
         else:
             print(f"{file_path} - Missing {description}")
@@ -71,14 +88,16 @@ def validate_ci_utilities():
     """Validate CI/CD utilities"""
     print("\nValidating CI/CD utilities...")
     
-    ci_utils_path = Path('src/ci_utils.py')
+    root = get_root_dir()
+    ci_utils_path = root / 'src' / 'ci_utils.py'
+    
     if not ci_utils_path.exists():
         print("src/ci_utils.py not found")
         return False
     
     # Test import
     try:
-        sys.path.insert(0, str(Path.cwd()))
+        sys.path.insert(0, str(root))
         from src.ci_utils import setup_ci_environment, generate_ci_report, validate_ci_environment
         print("CI utilities can be imported")
         
@@ -100,7 +119,9 @@ def validate_test_runner():
     """Validate test runner CI mode"""
     print("\nValidating test runner CI mode...")
     
-    run_tests_path = Path('run_tests.py')
+    root = get_root_dir()
+    run_tests_path = root / 'run_tests.py'
+    
     if not run_tests_path.exists():
         print("run_tests.py not found")
         return False
@@ -121,9 +142,10 @@ def validate_dependencies():
     """Validate CI/CD dependencies"""
     print("\nValidating CI/CD dependencies...")
     
+    root = get_root_dir()
     required_packages = ['black', 'isort', 'flake8', 'pytest']
     
-    with open('requirements.txt', 'r') as f:
+    with open(root / 'requirements.txt', 'r') as f:
         requirements = f.read()
     
     missing_packages = []
@@ -143,18 +165,19 @@ def validate_directory_structure():
     """Validate required directory structure"""
     print("\nValidating directory structure...")
     
+    root = get_root_dir()
     required_dirs = [
         '.github/workflows',
         'src',
         'tests', 
         'data',
         'models',
-        'logs'
+        'scripts'
     ]
     
     missing_dirs = []
     for dir_path in required_dirs:
-        if not Path(dir_path).exists():
+        if not (root / dir_path).exists():
             missing_dirs.append(dir_path)
     
     if missing_dirs:

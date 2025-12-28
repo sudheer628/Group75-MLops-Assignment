@@ -58,7 +58,6 @@ EXPERIMENTS_DIR = MODELS_DIR / "experiments"
 ARCHIVED_DIR = MODELS_DIR / "archived"
 VALIDATION_DIR = MODELS_DIR / "validation"
 ENVIRONMENTS_DIR = Path("environments")
-CONFIGS_DIR = Path("configs")
 PACKAGES_DIR = Path("packages")
 
 # Create directories
@@ -69,7 +68,6 @@ for directory in [
     ARCHIVED_DIR,
     VALIDATION_DIR,
     ENVIRONMENTS_DIR,
-    CONFIGS_DIR,
     PACKAGES_DIR,
 ]:
     directory.mkdir(exist_ok=True)

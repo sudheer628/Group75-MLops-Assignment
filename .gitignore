@@ -147,17 +147,6 @@ data/processed/*.csv
 data/processed/*.json
 data/processed/*.parquet
 
-# Figures and plots
-figures/*.png
-figures/*.jpg
-figures/*.jpeg
-figures/*.pdf
-figures/*.svg
-
-# Logs
-logs/
-*.log
-
 # Temporary files
 *.tmp
 *.temp
@@ -214,5 +203,3 @@ Thumbs.db
 # Keep important empty directories with .gitkeep
 !data/.gitkeep
 !models/.gitkeep
-!figures/.gitkeep
-!logs/.gitkeep

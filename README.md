@@ -26,8 +26,6 @@ This project implements an end-to-end MLOps pipeline for heart disease predictio
 │   ├── test-api-cloud.sh         # Cloud-based API testing
 │   ├── sample-input.json         # High-risk test case
 │   └── sample-input-healthy.json # Low-risk test case
-├── .devcontainer/                # GitHub Codespaces configuration
-│   └── devcontainer.json         # VS Code dev container setup
 ├── .github/workflows/            # GitHub Actions CI/CD
 │   ├── ci.yml                    # Main CI pipeline
 │   ├── container-build.yml       # Container build and registry
@@ -42,7 +40,6 @@ This project implements an end-to-end MLOps pipeline for heart disease predictio
 ├── docker-compose.yml            # Container orchestration
 ├── requirements.txt              # Python dependencies (ML pipeline)
 ├── requirements-api.txt          # API-specific dependencies
-├── CODESPACES.md                 # GitHub Codespaces guide
 └── README.md                     # This file
 ```
 
@@ -108,6 +105,9 @@ flake8 src/ tests/
 
 # Run tests in CI mode
 python run_tests.py --ci
+
+# Validate CI/CD pipeline configuration (optional)
+python scripts/validate_cicd.py
 ```
 
 ### GitHub Secrets Required
@@ -116,7 +116,7 @@ Configure in `Settings → Secrets and variables → Actions`:
 
 - `MLFLOW_TRACKING_URI`: `https://mlflow-tracking-production-53fb.up.railway.app`
 
-## 🚀 **Quick Start (Cloud Development)**
+## 🚀 **Quick Start**
 
 ### **Option 1: GitHub Actions Testing (Recommended)**
 
@@ -124,22 +124,13 @@ Configure in `Settings → Secrets and variables → Actions`:
 2. **Check Actions tab** for automated container builds and testing
 3. **View results** in workflow summaries
 
-### **Option 2: GitHub Codespaces Development**
-
-1. **Click "Code" → "Codespaces" → "Create codespace"**
-2. **Wait for automatic setup** (Python, Docker, dependencies)
-3. **Run tests**: `chmod +x scripts/test-api-cloud.sh && ./scripts/test-api-cloud.sh`
-4. **Access API** via forwarded ports
-
-### **Option 3: Use Pre-built Container**
+### **Option 2: Use Pre-built Container**
 
 ```bash
 # Pull from GitHub Container Registry
-docker pull ghcr.io/your-username/your-repo/heart-disease-api:latest
-docker run -p 8000:8000 ghcr.io/your-username/your-repo/heart-disease-api:latest
+docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+docker run -p 8000:8000 ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
 ```
-
-**📖 Detailed Guide**: See [CODESPACES.md](CODESPACES.md) for comprehensive instructions.
 
 ### Individual Task Testing
 
@@ -447,7 +438,6 @@ python src/model_packaging.py
 
 - `packages/{timestamp}/` - Complete deployment package
 - `environments/` - Environment snapshots
-- `configs/` - Configuration files
 - Validated and tested model packages ready for production deployment
 
 **Model Storage Integration:**
@@ -555,16 +545,6 @@ This ensures predictions are made on the same feature space as the trained model
 - **Container testing** in CI pipeline
 - **Registry push** to GitHub Container Registry (ghcr.io)
 - **Artifact caching** for faster subsequent builds
-
-#### **Cloud Development & Testing:**
-
-**Files**: `scripts/test-api-cloud.sh`, `test-data/`, `.devcontainer/`, `CODESPACES.md`
-
-- **GitHub Codespaces support** with automatic environment setup
-- **Cloud-based testing** script for container validation
-- **Sample test data** for different risk scenarios
-- **Automated validation** of API responses
-- **VS Code development environment** with pre-configured extensions
 
 #### **API Usage Examples:**
 
@@ -766,7 +746,6 @@ python data_acquisition_eda.py
 - `data/processed/features.csv` - Feature matrix
 - `data/processed/target.csv` - Target variable
 - `data/processed/data_quality_report.json` - Quality assessment
-- `figures/` - EDA visualizations (when uncommented)
 
 ### Task 2: Feature Engineering & Model Development
 
@@ -1025,8 +1004,8 @@ black src/ tests/
 isort src/ tests/
 flake8 src/ tests/
 
-# Validation
-python validate_cicd.py
+# Validation (optional)
+python scripts/validate_cicd.py
 ```
 
 #### **GitHub Secrets Required**
@@ -1055,8 +1034,6 @@ Configure in repository settings:
 - **Testing standards** (comprehensive test coverage)
 
 The CI/CD pipeline is now production-ready and follows industry best practices for MLOps workflows.
-
-- `figures/` - EDA visualizations (when uncommented)
 
 ## Dataset Information
 

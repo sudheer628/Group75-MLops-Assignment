@@ -27,11 +27,8 @@ def setup_ci_environment():
         "models/production",
         "models/validation",
         "models/archived",
-        "logs",
-        "figures",
         "packages",
         "environments",
-        "configs",
     ]
 
     for dir_path in directories:
@@ -39,7 +36,7 @@ def setup_ci_environment():
         print(f"Created directory: {dir_path}")
 
     # Create .gitkeep files to preserve directory structure
-    gitkeep_dirs = ["data/raw", "data/processed", "logs", "figures", "packages"]
+    gitkeep_dirs = ["data/raw", "data/processed", "packages"]
     for dir_path in gitkeep_dirs:
         gitkeep_file = Path(dir_path) / ".gitkeep"
         gitkeep_file.touch(exist_ok=True)
@@ -96,7 +93,7 @@ def generate_ci_report():
     }
 
     # Check directory structure and file counts
-    check_dirs = ["data", "models", "logs", "figures", "packages", "src", "tests"]
+    check_dirs = ["data", "models", "packages", "src", "tests"]
     for dir_name in check_dirs:
         dir_path = Path(dir_name)
         if dir_path.exists():
@@ -122,15 +119,9 @@ def generate_ci_report():
     for file_path in key_files:
         report["key_files"][file_path] = Path(file_path).exists()
 
-    # Save report to logs directory
-    logs_dir = Path("logs")
-    logs_dir.mkdir(exist_ok=True)
-
-    report_file = logs_dir / "ci_report.json"
-    with open(report_file, "w") as f:
-        json.dump(report, f, indent=2)
-
-    print(f"CI/CD report saved to: {report_file}")
+    # Print report to console instead of saving to file
+    print("\nCI/CD Report (JSON):")
+    print(json.dumps(report, indent=2))
 
     # Print summary to console
     print("\n" + "=" * 60)
