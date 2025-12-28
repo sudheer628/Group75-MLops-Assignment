@@ -1,7 +1,7 @@
 # Heart Disease Prediction MLOps Project
 
-[![CI Pipeline](https://github.com/YOUR_USERNAME/YOUR_REPO/workflows/CI%20Pipeline%20-%20Lint%20and%20Test/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions)
-[![Model Training](https://github.com/YOUR_USERNAME/YOUR_REPO/workflows/Model%20Training%20Pipeline/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions)
+[![CI Pipeline](https://github.com/sudheer628/group75-mlops-assignment/workflows/CI%20Pipeline%20-%20Lint%20and%20Test/badge.svg)](https://github.com/sudheer628/group75-mlops-assignment/actions)
+[![Model Training](https://github.com/sudheer628/group75-mlops-assignment/workflows/Model%20Training%20Pipeline/badge.svg)](https://github.com/sudheer628/group75-mlops-assignment/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![MLflow](https://img.shields.io/badge/MLflow-3.8.0-orange.svg)](https://mlflow.org/)
 [![Railway](https://img.shields.io/badge/Railway-MLflow%20Server-green.svg)](https://railway.app/)
@@ -599,11 +599,43 @@ curl -X POST "https://your-api-url/predict" \
 
 #### **Container Registry:**
 
-Images are automatically built and pushed to:
+Images are automatically built and pushed to GitHub Container Registry (GHCR):
 
-- `ghcr.io/username/repo/heart-disease-api:latest`
-- `ghcr.io/username/repo/heart-disease-api:main-sha123`
-- `ghcr.io/username/repo/heart-disease-api:v1.0.0` (on tags)
+- `ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest` - Latest build
+- `ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:main` - Main branch
+- `ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:main-sha123` - Specific commit
+- `ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:v1.0.0` - Semantic version tags
+
+**How to Access Your Container Image:**
+
+1. **Via GitHub Web Interface**:
+
+   - Go to your repository
+   - Click **Packages** (right sidebar)
+   - Find `heart-disease-api` package
+   - View all available tags and versions
+
+2. **Direct GHCR Link**:
+
+   ```
+   https://ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api
+   ```
+
+3. **Pull and Run Locally**:
+
+   ```bash
+   # Login to GHCR (first time only)
+   echo $GITHUB_TOKEN | docker login ghcr.io -u sudheer628 --password-stdin
+
+   # Pull the latest image
+   docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+
+   # Run the container
+   docker run -p 8000:8000 ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+
+   # Test the API
+   curl http://localhost:8000/health
+   ```
 
 #### **Development Options:**
 
@@ -638,8 +670,8 @@ chmod +x scripts/test-api-cloud.sh
 
 ```bash
 # Pull and run the latest built image
-docker pull ghcr.io/username/repo/heart-disease-api:latest
-docker run -p 8000:8000 ghcr.io/username/repo/heart-disease-api:latest
+docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+docker run -p 8000:8000 ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
 ```
 
 #### **Production Deployment Ready:**
@@ -649,6 +681,42 @@ docker run -p 8000:8000 ghcr.io/username/repo/heart-disease-api:latest
 - **Environment configuration** through environment variables
 - **Monitoring** integration points built-in
 - **Scalability** designed for horizontal scaling
+
+#### **Accessing Your Container Image**
+
+Your container is automatically built and stored in GitHub Container Registry (GHCR) after each successful CI/CD pipeline run.
+
+**Find Your Container:**
+
+1. Go to your GitHub repository
+2. Click **Packages** (right sidebar)
+3. Find `heart-disease-api` package
+4. View all available tags and versions
+
+**Pull and Run:**
+
+```bash
+# Login to GHCR
+echo $GITHUB_TOKEN | docker login ghcr.io -u sudheer628 --password-stdin
+
+# Pull the latest image
+docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+
+# Run the container
+docker run -p 8000:8000 ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+
+# Test the API
+curl http://localhost:8000/health
+```
+
+**Available Tags:**
+
+- `latest` - Most recent build
+- `main` - Latest from main branch
+- `main-sha123abc...` - Specific commit
+- `v1.0.0` - Semantic version tags
+
+See PIPELINE_WORKFLOW.md for detailed container registry access instructions.
 
 ## Git Configuration
 

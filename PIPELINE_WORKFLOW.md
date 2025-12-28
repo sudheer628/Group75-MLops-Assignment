@@ -467,3 +467,523 @@ Restructured workflows with proper sequential dependencies:
 
 - **CI Pipeline**: Push to main/develop, Pull Requests
 - **Container Build**: After CI completes successfully, Manual dispatch, Tags
+
+## Container Registry Access (TASK-6 Deployment)
+
+### Container Image Location
+
+Your Docker container is automatically built and stored in GitHub Container Registry (GHCR):
+
+**Registry URL**: `ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api`
+
+### Finding Your Container
+
+**Method 1: GitHub Web Interface**
+
+1. Go to your GitHub repository
+2. Click **Packages** (in right sidebar)
+3. Find `heart-disease-api` package
+4. Click to view all versions and tags
+
+**Method 2: Direct GHCR Link**
+
+```
+https://ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api
+```
+
+### Available Image Tags
+
+The workflow automatically creates multiple tags:
+
+- `latest` - Most recent build
+- `main` - Latest from main branch
+- `main-sha123abc...` - Specific commit SHA
+- `v1.0.0` - Semantic version (when you create git tags)
+
+### Pulling and Running the Container
+
+**Step 1: Authenticate with GHCR**
+
+```bash
+# Create a GitHub Personal Access Token with 'read:packages' scope
+# Then login:
+echo $GITHUB_TOKEN | docker login ghcr.io -u sudheer628 --password-stdin
+```
+
+**Step 2: Pull the Image**
+
+```bash
+docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+```
+
+**Step 3: Run the Container**
+
+```bash
+docker run -p 8000:8000 ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+```
+
+**Step 4: Test the API**
+
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# Prediction
+curl -X POST "http://localhost:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 55, "sex": 1, "cp": 3, "trestbps": 140,
+    "chol": 250, "fbs": 0, "restecg": 1, "thalach": 150,
+    "exang": 0, "oldpeak": 1.5, "slope": 2, "ca": 0, "thal": 3
+  }'
+
+# API documentation
+# Open browser to: http://localhost:8000/docs
+```
+
+### Viewing Build Logs
+
+To see container build details and logs:
+
+1. Go to your GitHub repository
+2. Click **Actions** tab
+3. Click **Build and Push Container** workflow
+4. Click the latest successful run
+5. Click **build-and-test** job to view logs
+
+### Container Build Workflow
+
+The container is automatically built and pushed when:
+
+- You push to `main` or `develop` branches
+- You create a git tag (e.g., `v1.0.0`)
+- You manually trigger via **Actions** → **Build and Push Container** → **Run workflow**
+- After CI Pipeline completes successfully
+
+### Deployment Ready
+
+Your container image is production-ready with:
+
+- Multi-architecture support (AMD64, ARM64)
+- Health checks configured
+- Environment variable support
+- Kubernetes-compatible
+- Load balancer ready
+- Monitoring integration points
+
+### Next Steps (TASK-7)
+
+For production deployment, you can:
+
+1. **Deploy to Kubernetes**: Use the container image with deployment manifests
+2. **Deploy to Cloud**: Push to cloud container registries (ECR, ACR, etc.)
+3. **Deploy to Docker Swarm**: Use the image in swarm services
+4. **Deploy to Serverless**: Use with AWS Lambda, Google Cloud Run, etc.
+
+## Container Registry Comparison: GHCR vs ECR vs Other Options
+
+### Quick Answer
+
+Yes, GHCR (GitHub Container Registry) is a direct alternative to AWS ECR (Elastic Container Registry). Both serve the same purpose: storing and managing Docker container images. However, they differ in ecosystem, pricing, and features.
+
+### Side-by-Side Comparison
+
+| Feature            | GHCR                          | ECR                | Docker Hub                    | GCR/GAR                  |
+| ------------------ | ----------------------------- | ------------------ | ----------------------------- | ------------------------ |
+| **Provider**       | GitHub                        | AWS                | Docker Inc                    | Google Cloud             |
+| **Pricing**        | Free (public), paid (private) | Pay-per-image      | Free (public), paid (private) | Pay-per-image            |
+| **Integration**    | GitHub Actions (native)       | AWS services       | Limited                       | Google Cloud services    |
+| **Authentication** | GitHub token                  | AWS credentials    | Docker credentials            | Google credentials       |
+| **Best For**       | GitHub-based workflows        | AWS deployments    | General use                   | Google Cloud deployments |
+| **Private Repos**  | Included with GitHub          | Separate service   | Paid tier                     | Separate service         |
+| **Bandwidth**      | Included                      | Charged separately | Included                      | Charged separately       |
+
+### GHCR (GitHub Container Registry) - What You're Using
+
+**Pros:**
+
+- Seamlessly integrated with GitHub Actions (your CI/CD pipeline)
+- Free for public repositories
+- No separate authentication needed (uses GitHub token)
+- Automatic cleanup policies
+- Works perfectly with GitHub-based workflows
+- No additional AWS account needed
+
+**Cons:**
+
+- Limited to GitHub ecosystem
+- Fewer advanced features than ECR
+- Less mature than Docker Hub or ECR
+
+**Best For:**
+
+- Projects already on GitHub
+- Teams using GitHub Actions
+- Open-source projects
+- Quick prototyping and CI/CD
+
+### ECR (AWS Elastic Container Registry)
+
+**Pros:**
+
+- Deep integration with AWS services (ECS, EKS, Lambda)
+- Enterprise-grade features
+- Lifecycle policies for image management
+- Image scanning and vulnerability detection
+- Cross-region replication
+- Fine-grained IAM access control
+
+**Cons:**
+
+- Requires AWS account
+- Pay-per-image storage model
+- More complex setup
+- Separate authentication from GitHub
+- Bandwidth charges
+
+**Best For:**
+
+- AWS-based deployments
+- Enterprise environments
+- Complex image management needs
+- Production deployments on AWS
+
+### When to Use Each
+
+**Use GHCR (Your Current Setup):**
+
+- ✓ You're using GitHub for version control
+- ✓ You're using GitHub Actions for CI/CD
+- ✓ You want quick setup with minimal configuration
+- ✓ Your project is open-source or small-scale
+- ✓ You don't have AWS infrastructure
+
+**Use ECR:**
+
+- ✓ You're deploying to AWS (ECS, EKS)
+- ✓ You need enterprise-grade features
+- ✓ You need image scanning and vulnerability detection
+- ✓ You have complex image management needs
+- ✓ You're already using AWS services
+
+### Migration Path: GHCR to ECR
+
+If you later need to move from GHCR to ECR:
+
+```bash
+# Step 1: Pull from GHCR
+docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
+
+# Step 2: Tag for ECR
+docker tag ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest \
+  YOUR_AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/heart-disease-api:latest
+
+# Step 3: Login to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin \
+  YOUR_AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+
+# Step 4: Push to ECR
+docker push YOUR_AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/heart-disease-api:latest
+```
+
+### Other Container Registry Options
+
+**Docker Hub** - Most popular, free public repos, paid private repos
+**Google Artifact Registry (GAR)** - Google Cloud equivalent of ECR
+**Azure Container Registry (ACR)** - Microsoft Azure equivalent
+**Harbor** - Self-hosted, open-source option
+**GitLab Container Registry** - Built into GitLab
+
+### Your Current Setup (GHCR)
+
+Your project is perfectly configured for GHCR because:
+
+1. **GitHub Actions Integration**: Your CI/CD pipeline automatically builds and pushes to GHCR
+2. **No Extra Setup**: No AWS account or additional credentials needed
+3. **Perfect for TASK-6**: Container is built, tested, and stored automatically
+4. **Ready for TASK-7**: Can deploy from GHCR to any cloud platform
+
+### For TASK-7 (Production Deployment)
+
+When you deploy to production (TASK-7), you have options:
+
+**Option 1: Deploy from GHCR (Recommended for now)**
+
+- Pull directly from GHCR
+- Works with any cloud platform
+- No additional setup needed
+
+**Option 2: Migrate to ECR (If using AWS)**
+
+- Use the migration path above
+- Deploy to AWS ECS or EKS
+- Better integration with AWS services
+
+**Option 3: Use Multiple Registries**
+
+- Keep GHCR for development
+- Use ECR for production
+- Automatic sync between registries
+
+### Summary
+
+GHCR is an excellent alternative to ECR for your use case. It's simpler, integrates perfectly with GitHub Actions, and requires no additional cloud infrastructure. You can always migrate to ECR later if you need AWS-specific features or are deploying to AWS infrastructure.
+
+Your current setup with GHCR is production-ready and follows modern DevOps practices!
+
+## .devcontainer Directory - Purpose and Usage
+
+### What is .devcontainer?
+
+The `.devcontainer` directory contains configuration for **GitHub Codespaces** and **VS Code Dev Containers**. It defines a complete development environment that runs in a container, eliminating "works on my machine" problems.
+
+### Purpose
+
+The `.devcontainer/devcontainer.json` file specifies:
+
+1. **Base Development Image** - Python 3.11 environment
+2. **Required Tools** - Docker, GitHub CLI
+3. **VS Code Extensions** - Python, linting, formatting tools
+4. **IDE Settings** - Code formatting, linting configuration
+5. **Port Forwarding** - Expose port 8000 for API testing
+6. **Auto-setup** - Automatically install dependencies on startup
+
+### Your Configuration Breakdown
+
+```json
+{
+  "name": "Heart Disease MLOps",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  }
+}
+```
+
+**What this means:**
+
+- Base image: Python 3.11 with development tools
+- Docker-in-Docker: Run Docker commands inside the container
+- GitHub CLI: Interact with GitHub from terminal
+
+### When .devcontainer is Needed
+
+#### Stage 1: Local Development (Optional)
+
+- Use if you want consistent environment across team
+- Eliminates Python version conflicts
+- Pre-configured IDE settings
+
+#### Stage 2: GitHub Codespaces (Recommended)
+
+- **This is where .devcontainer shines**
+- Automatic cloud-based development environment
+- No local setup needed
+- Works from any browser
+- Perfect for teammates
+
+#### Stage 3: CI/CD Pipeline (Not Used)
+
+- GitHub Actions doesn't use .devcontainer
+- Uses its own runner environment
+- Separate from development container
+
+#### Stage 4: Production Deployment (Not Used)
+
+- Production uses the main Dockerfile
+- Not the .devcontainer configuration
+- Different purpose (serving vs developing)
+
+### How to Use .devcontainer
+
+#### Option 1: GitHub Codespaces (Cloud-Based)
+
+1. Go to your GitHub repository
+2. Click **Code** → **Codespaces** → **Create codespace on main**
+3. Wait for environment to load (2-3 minutes)
+4. VS Code opens in browser with everything pre-configured
+
+**Advantages:**
+
+- No local setup needed
+- Works from any device
+- Automatic dependency installation
+- Pre-configured IDE settings
+- Port 8000 automatically forwarded
+
+#### Option 2: VS Code Dev Containers (Local)
+
+1. Install Docker Desktop
+2. Install VS Code extension: "Dev Containers"
+3. Open repository in VS Code
+4. Click "Reopen in Container" (bottom-left corner)
+5. Wait for container to build and start
+
+**Advantages:**
+
+- Local development with container isolation
+- Same environment as Codespaces
+- Full IDE features
+- Can work offline
+
+#### Option 3: Manual Setup (No Container)
+
+```bash
+conda activate myenv
+pip install -r requirements.txt
+pip install -r requirements-api.txt
+```
+
+**Advantages:**
+
+- Fastest setup
+- Direct access to system
+
+**Disadvantages:**
+
+- Environment conflicts possible
+- Different across team members
+
+### What Gets Installed Automatically
+
+When you open in Codespaces or Dev Container:
+
+```bash
+# Automatically runs:
+pip install -r requirements.txt      # ML dependencies
+pip install -r requirements-api.txt  # API dependencies
+```
+
+**Installed packages include:**
+
+- pandas, numpy, scikit-learn (ML)
+- fastapi, uvicorn (API)
+- mlflow (experiment tracking)
+- pytest (testing)
+- flake8, black, isort (code quality)
+
+### VS Code Extensions Pre-Configured
+
+Your .devcontainer automatically installs:
+
+- **Python** - Language support
+- **Flake8** - Linting
+- **Black** - Code formatting
+- **isort** - Import sorting
+- **Jupyter** - Notebook support
+- **Docker** - Container management
+- **YAML** - Workflow file editing
+- **JSON** - Configuration file editing
+
+### IDE Settings Pre-Configured
+
+```json
+"python.defaultInterpreterPath": "/usr/local/bin/python",
+"python.linting.enabled": true,
+"python.linting.flake8Enabled": true,
+"python.formatting.provider": "black",
+"python.formatting.blackArgs": ["--line-length=127"],
+"python.sortImports.args": ["--profile", "black"]
+```
+
+**What this does:**
+
+- Uses Python 3.11 interpreter
+- Enables linting with flake8
+- Auto-formats code with black
+- Sorts imports with isort
+- All configured automatically
+
+### Port Forwarding
+
+```json
+"forwardPorts": [8000],
+"portsAttributes": {
+  "8000": {
+    "label": "Heart Disease API",
+    "onAutoForward": "notify"
+  }
+}
+```
+
+**What this does:**
+
+- Exposes port 8000 (your API)
+- Automatically forwards to local machine
+- Shows notification when forwarded
+- Can access API from browser
+
+### Recommended Workflow
+
+**For Development:**
+
+```bash
+# Option 1: GitHub Codespaces (Recommended)
+1. Click "Code" → "Codespaces" → "Create codespace"
+2. Wait for environment
+3. Start developing
+
+# Option 2: VS Code Dev Container
+1. Install Docker Desktop
+2. Install "Dev Containers" extension
+3. Open repo in VS Code
+4. Click "Reopen in Container"
+5. Start developing
+
+# Option 3: Manual (If no Docker)
+conda activate myenv
+pip install -r requirements.txt
+pip install -r requirements-api.txt
+```
+
+### .devcontainer vs Dockerfile
+
+| Aspect       | .devcontainer                  | Dockerfile                |
+| ------------ | ------------------------------ | ------------------------- |
+| **Purpose**  | Development environment        | Production container      |
+| **Used By**  | Codespaces, VS Code            | Docker, CI/CD, Deployment |
+| **Includes** | IDE extensions, dev tools      | Minimal, production-only  |
+| **Stage**    | Development (TASK-1 to TASK-6) | Deployment (TASK-7)       |
+| **Size**     | Larger (includes IDE)          | Smaller (optimized)       |
+
+### When to Use .devcontainer
+
+**Use .devcontainer when:**
+
+- ✓ Setting up development environment
+- ✓ Using GitHub Codespaces
+- ✓ Using VS Code Dev Containers
+- ✓ Onboarding new team members
+- ✓ Ensuring consistent development environment
+
+**Don't use .devcontainer for:**
+
+- ✗ Production deployment (use Dockerfile)
+- ✗ CI/CD pipeline (uses separate runner)
+- ✗ Local development without Docker
+
+### For Your MLOps Project
+
+**Current Stage (TASK-6 Complete):**
+
+- .devcontainer is optional but recommended
+- Useful for team collaboration
+- Perfect for GitHub Codespaces
+
+**Next Stage (TASK-7 Production Deployment):**
+
+- Use main Dockerfile (not .devcontainer)
+- Deploy container from GHCR
+- .devcontainer not needed
+
+### Summary
+
+**.devcontainer is for development, not production:**
+
+- **Development**: Use .devcontainer with Codespaces or VS Code
+- **Production**: Use main Dockerfile with GHCR
+- **CI/CD**: Uses GitHub Actions runner (separate)
+
+Your .devcontainer is perfectly configured for team development and cloud-based coding with GitHub Codespaces!
