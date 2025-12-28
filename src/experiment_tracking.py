@@ -57,13 +57,12 @@ try:
 except ImportError:
     print("Warning: Could not import from previous tasks. Make sure to run Tasks 1 and 2 first.")
 
-# Set up local directories (for figures and models only)
+# Set up local directories (for models only)
 MODELS_DIR = Path("models")
-FIGURES_DIR = Path("figures")
 EXPERIMENTS_DIR = Path("experiments")
 
 # Create directories if they don't exist (no mlruns - using Railway)
-for directory in [MODELS_DIR, FIGURES_DIR, EXPERIMENTS_DIR]:
+for directory in [MODELS_DIR, EXPERIMENTS_DIR]:
     directory.mkdir(exist_ok=True)
 
 

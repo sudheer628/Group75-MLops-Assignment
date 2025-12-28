@@ -288,6 +288,56 @@ python run_tests.py --task4
 python src/model_packaging.py
 ```
 
+## API Feature Engineering (TASK-6 Fix)
+
+### Problem Solved
+
+The CI/CD pipeline was failing with error: "The feature names should match those that were passed during fit. Feature names seen at fit time, yet now missing: age_group, age_sex_interaction, chol_age_ratio..."
+
+### Root Cause
+
+The model was trained with engineered features (6 additional features created during Task 2), but the API was only receiving the raw 13 input features. This caused a feature mismatch error during prediction.
+
+### Solution Implemented
+
+The API now automatically applies the same feature engineering pipeline used during model training:
+
+**File**: `app/prediction.py`
+
+**Engineered Features Applied**:
+
+1. **age_group**: Categorizes age into young (0-40), middle_aged (40-50), senior (50-60), elderly (60+)
+2. **chol_age_ratio**: Metabolic health indicator = cholesterol / age
+3. **heart_rate_reserve**: Exercise capacity = max_heart_rate - (220 - age)
+4. **risk_score**: Composite risk = age*0.1 + chol*0.01 + trestbps*0.1 + oldpeak*10
+5. **age_sex_interaction**: Combined effect = age \* sex
+6. **cp_exang_interaction**: Combined effect = chest_pain_type \* exercise_angina
+
+**How It Works**:
+
+```
+API Input (13 raw features)
+    ↓
+_engineer_features() method
+    ↓
+Creates 6 engineered features
+    ↓
+Combined 19 features (13 raw + 6 engineered)
+    ↓
+Model prediction
+    ↓
+API Output
+```
+
+**API Endpoints Updated**:
+
+- `POST /predict`: Automatically applies feature engineering before prediction
+- `GET /model/info`: Returns both raw_feature_names and engineered_feature_names
+
+**Testing**:
+
+The fix ensures CI/CD pipeline tests pass by providing models with the exact feature space they were trained on.
+
 ## File Structure Overview
 
 ```
@@ -302,9 +352,9 @@ Assignment-1/
 │   └── raw/                     # Raw data files
 ├── models/                       # Local model artifacts
 ├── packages/                     # Deployment packages
+├── scripts/                      # Testing and utility scripts
 ├── tests/                        # Unit tests
 ├── environments/                 # Environment specifications
-├── figures/                      # Generated visualizations
 ├── requirements.txt             # Python dependencies
 └── run_tests.py                 # Test runner
 ```
@@ -362,3 +412,58 @@ ls -la packages/heart_disease_model_*/
 ```
 
 This workflow ensures controlled model versioning, team collaboration, and production readiness while maintaining clear separation between development, testing, and production deployment phases.
+
+## CI/CD Workflow Dependencies (TASK-6 Optimization)
+
+### Problem Solved
+
+Two separate workflows were running simultaneously and failing at the same time:
+
+- **CI Pipeline - Lint and Test** (`ci.yml`) - had container testing
+- **Build and Push Container** (`container-build.yml`) - also had container testing
+
+This caused resource conflicts and duplicate testing efforts.
+
+### Solution Implemented
+
+Restructured workflows with proper sequential dependencies:
+
+**Workflow Execution Order**:
+
+```
+1. CI Pipeline (ci.yml) - Runs on push
+   ├── lint (Code Quality Checks)
+   ├── test (Unit Tests) - depends on lint
+   └── Completes
+
+2. Build and Push Container (container-build.yml) - Triggered after CI completes
+   └── build-and-test (Build and Test Container) - depends on CI success
+       └── Completes
+```
+
+**Changes Made**:
+
+1. **ci.yml**:
+
+   - Removed redundant `container-test` job
+   - Focuses on code quality and unit testing only
+   - Runs on every push to main/develop
+
+2. **container-build.yml**:
+   - Added `workflow_run` trigger to depend on CI Pipeline completion
+   - Added condition: `if: github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run'`
+   - Only runs container build/test after CI passes
+   - Prevents duplicate container testing
+
+**Benefits**:
+
+- No more simultaneous job failures
+- Clear sequential workflow execution
+- Faster feedback (CI runs first, container build only if CI passes)
+- Reduced resource usage (no duplicate container tests)
+- Better error isolation (know exactly which stage failed)
+
+**Workflow Triggers**:
+
+- **CI Pipeline**: Push to main/develop, Pull Requests
+- **Container Build**: After CI completes successfully, Manual dispatch, Tags

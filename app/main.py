@@ -133,7 +133,8 @@ async def model_info():
         "model_loaded": predictor.is_loaded,
         "model_path": settings.MODEL_PATH,
         "preprocessing_pipeline_path": settings.PREPROCESSING_PIPELINE_PATH,
-        "feature_names": predictor.feature_names,
+        "raw_feature_names": predictor.raw_feature_names,
+        "engineered_feature_names": predictor.engineered_feature_names,
         "model_type": type(predictor.model).__name__ if predictor.model else None
     }
 

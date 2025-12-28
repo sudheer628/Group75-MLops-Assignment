@@ -223,10 +223,7 @@ def generate_validation_report():
         'overall_status': 'PASS' if all_passed else 'FAIL'
     }
     
-    with open('logs/cicd_validation_report.json', 'w') as f:
-        json.dump(report, f, indent=2)
-    
-    print(f"\nDetailed report saved to: logs/cicd_validation_report.json")
+    print(f"\nValidation report: {report}")
     
     return all_passed
 
@@ -234,9 +231,6 @@ def generate_validation_report():
 if __name__ == "__main__":
     print("MLOps CI/CD Pipeline Validation")
     print("="*40)
-    
-    # Ensure logs directory exists
-    Path('logs').mkdir(exist_ok=True)
     
     # Run validation
     success = generate_validation_report()

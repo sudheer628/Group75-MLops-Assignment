@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["CI Pipeline - Lint and Test"]
+    types: [completed]
+    branches: [main, develop]
 
 env:
   REGISTRY: ghcr.io
@@ -16,6 +20,7 @@ jobs:
   build-and-test:
     name: Build and Test Container
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run'
     permissions:
       contents: read
       packages: write

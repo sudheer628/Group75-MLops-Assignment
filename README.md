@@ -22,11 +22,10 @@ This project implements an end-to-end MLOps pipeline for heart disease predictio
 │   ├── experiment_tracking.py    # Task 3: MLflow experiment tracking
 │   ├── model_packaging.py        # Task 4: Model packaging and reproducibility
 │   └── ci_utils.py               # CI/CD utilities
-├── test-data/                    # API test data
+├── scripts/                      # Testing and utility scripts
+│   ├── test-api-cloud.sh         # Cloud-based API testing
 │   ├── sample-input.json         # High-risk test case
 │   └── sample-input-healthy.json # Low-risk test case
-├── scripts/                      # Testing and utility scripts
-│   └── test-api-cloud.sh         # Cloud-based API testing
 ├── .devcontainer/                # GitHub Codespaces configuration
 │   └── devcontainer.json         # VS Code dev container setup
 ├── .github/workflows/            # GitHub Actions CI/CD
@@ -520,6 +519,20 @@ Task 4 unifies both Task 2 (local storage) and Task 3 (Railway MLflow storage) a
 - **CORS support** for web applications
 - **Health checks** for container orchestration
 - **Security** with non-root user execution
+- **Automatic feature engineering** - Applies the same engineered features used during model training (age_group, chol_age_ratio, heart_rate_reserve, risk_score, age_sex_interaction, cp_exang_interaction)
+
+**Feature Engineering in API:**
+
+The API automatically applies the same feature engineering pipeline used during model training:
+
+- **Age Groups**: Categorizes age into young, middle_aged, senior, elderly
+- **Cholesterol-Age Ratio**: Metabolic health indicator (chol / age)
+- **Heart Rate Reserve**: Exercise capacity indicator (thalach - (220 - age))
+- **Risk Score**: Composite risk metric combining age, cholesterol, blood pressure, and ST depression
+- **Age-Sex Interaction**: Combined effect of age and sex
+- **CP-Exang Interaction**: Combined effect of chest pain type and exercise-induced angina
+
+This ensures predictions are made on the same feature space as the trained model, preventing feature mismatch errors.
 
 #### **Container Features:**
 

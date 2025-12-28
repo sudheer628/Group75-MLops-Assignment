@@ -46,10 +46,9 @@ warnings.filterwarnings("ignore")
 DATA_DIR = Path("data")
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 MODELS_DIR = Path("models")
-FIGURES_DIR = Path("figures")
 
 # Create directories if they don't exist
-for directory in [MODELS_DIR, FIGURES_DIR]:
+for directory in [MODELS_DIR]:
     directory.mkdir(exist_ok=True)
 
 
@@ -543,7 +542,7 @@ def create_model_comparison_plots(evaluation_results, y_test):
     # plt.savefig(FIGURES_DIR / 'confusion_matrices.png', dpi=300, bbox_inches='tight')
     # plt.show()
 
-    print("All model comparison plots created and saved to figures/ directory")
+    print("Model comparison plots generated")
 
 
 def save_models_and_results(evaluation_results, target_info, feature_names):

@@ -21,10 +21,9 @@ import seaborn as sns
 DATA_DIR = Path("data")
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
-FIGURES_DIR = Path("figures")
 
 # Create directories if they don't exist
-for directory in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, FIGURES_DIR]:
+for directory in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR]:
     directory.mkdir(exist_ok=True)
 
 
@@ -282,7 +281,7 @@ def create_eda_visualizations(X, y):
     # plt.savefig(FIGURES_DIR / 'boxplots_by_target.png', dpi=300, bbox_inches='tight')
     # plt.show()
 
-    print("All visualizations created and saved to figures/ directory")
+    print("EDA visualizations generated")
 
 
 def save_processed_data(X, y, quality_report):

@@ -68,7 +68,7 @@ fi
 echo "Testing /predict endpoint (high-risk sample)..."
 prediction_response=$(curl -s -X POST "http://localhost:$PORT/predict" \
   -H "Content-Type: application/json" \
-  -d @test-data/sample-input.json)
+  -d @scripts/sample-input.json)
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN} Prediction endpoint passed${NC}"
@@ -94,7 +94,7 @@ fi
 echo "Testing /predict endpoint (healthy sample)..."
 healthy_response=$(curl -s -X POST "http://localhost:$PORT/predict" \
   -H "Content-Type: application/json" \
-  -d @test-data/sample-input-healthy.json)
+  -d @scripts/sample-input-healthy.json)
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN} Healthy sample prediction passed${NC}"

@@ -20,9 +20,15 @@ class HeartDiseasePredictor:
     def __init__(self):
         self.model = None
         self.preprocessing_pipeline = None
-        self.feature_names = [
+        self.raw_feature_names = [
             'age', 'sex', 'cp', 'trestbps', 'chol', 'fbs',
             'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal'
+        ]
+        self.engineered_feature_names = [
+            'age', 'sex', 'cp', 'trestbps', 'chol', 'fbs',
+            'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal',
+            'age_group', 'chol_age_ratio', 'heart_rate_reserve', 'risk_score',
+            'age_sex_interaction', 'cp_exang_interaction'
         ]
         self._initialized = False
     
@@ -86,8 +92,11 @@ class HeartDiseasePredictor:
         data_dict = input_data.dict()
         df = pd.DataFrame([data_dict])
         
-        # Ensure correct column order
-        df = df[self.feature_names]
+        # Ensure correct column order for raw features
+        df = df[self.raw_feature_names]
+        
+        # Apply feature engineering (same as training)
+        df = self._engineer_features(df)
         
         # Apply preprocessing pipeline if available
         if self.preprocessing_pipeline is not None:
@@ -95,13 +104,41 @@ class HeartDiseasePredictor:
                 df_processed = self.preprocessing_pipeline.transform(df)
                 # Convert back to DataFrame if it's a numpy array
                 if isinstance(df_processed, np.ndarray):
-                    df_processed = pd.DataFrame(df_processed, columns=self.feature_names)
+                    df_processed = pd.DataFrame(df_processed, columns=self.engineered_feature_names)
                 return df_processed
             except Exception as e:
                 logger.warning(f"Preprocessing pipeline failed: {e}")
-                logger.info("Using raw input data")
+                logger.info("Using engineered features without scaling")
         
         return df
+    
+    def _engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Apply the same feature engineering as during training"""
+        from sklearn.preprocessing import LabelEncoder
+        
+        df_eng = df.copy()
+        
+        # Age groups
+        df_eng["age_group"] = pd.cut(df_eng["age"], bins=[0, 40, 50, 60, 100], labels=["young", "middle_aged", "senior", "elderly"])
+        df_eng["age_group"] = LabelEncoder().fit_transform(df_eng["age_group"])
+        
+        # Cholesterol to age ratio
+        df_eng["chol_age_ratio"] = df_eng["chol"] / df_eng["age"]
+        
+        # Heart rate reserve
+        df_eng["heart_rate_reserve"] = df_eng["thalach"] - (220 - df_eng["age"])
+        
+        # Risk score
+        df_eng["risk_score"] = df_eng["age"] * 0.1 + df_eng["chol"] * 0.01 + df_eng["trestbps"] * 0.1 + df_eng["oldpeak"] * 10
+        
+        # Interaction features
+        df_eng["age_sex_interaction"] = df_eng["age"] * df_eng["sex"]
+        df_eng["cp_exang_interaction"] = df_eng["cp"] * df_eng["exang"]
+        
+        # Ensure correct column order
+        df_eng = df_eng[self.engineered_feature_names]
+        
+        return df_eng
     
     def predict(self, input_data: PredictionInput) -> PredictionOutput:
         """Make prediction for heart disease"""

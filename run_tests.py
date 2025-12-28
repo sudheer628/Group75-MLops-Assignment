@@ -410,7 +410,7 @@ def run_ci_tests():
         # Generate CI report
         log_ci_step("Report Generation", "started")
         report = generate_ci_report()
-        log_ci_step("Report Generation", "completed", f"Report saved to logs/ci_report.json")
+        log_ci_step("Report Generation", "completed")
         
         log_ci_step("CI/CD Test Pipeline", "completed" if success else "failed")
         return success
