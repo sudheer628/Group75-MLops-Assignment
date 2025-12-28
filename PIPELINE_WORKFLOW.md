@@ -352,8 +352,7 @@ Assignment-1/
 │   └── raw/                     # Raw data files
 ├── models/                       # Local model artifacts
 ├── packages/                     # Deployment packages
-├── scripts/                      # Testing and utility scripts
-├── tests/                        # Unit tests
+├── tests/                        # Unit tests and testing utilities
 ├── environments/                 # Environment specifications
 ├── requirements.txt             # Python dependencies
 └── run_tests.py                 # Test runner

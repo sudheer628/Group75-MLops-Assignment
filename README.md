@@ -22,10 +22,6 @@ This project implements an end-to-end MLOps pipeline for heart disease predictio
 │   ├── experiment_tracking.py    # Task 3: MLflow experiment tracking
 │   ├── model_packaging.py        # Task 4: Model packaging and reproducibility
 │   └── ci_utils.py               # CI/CD utilities
-├── scripts/                      # Testing and utility scripts
-│   ├── test-api-cloud.sh         # Cloud-based API testing
-│   ├── sample-input.json         # High-risk test case
-│   └── sample-input-healthy.json # Low-risk test case
 ├── .github/workflows/            # GitHub Actions CI/CD
 │   ├── ci.yml                    # Main CI pipeline
 │   ├── container-build.yml       # Container build and registry
@@ -35,7 +31,15 @@ This project implements an end-to-end MLOps pipeline for heart disease predictio
 │   ├── raw/                      # Raw datasets
 │   └── processed/                # Processed datasets
 ├── models/                       # Trained models (gitignored except structure)
-├── tests/                        # Unit tests
+├── tests/                        # Unit tests and testing utilities
+│   ├── test_task1_data_acquisition.py
+│   ├── test_task2_feature_engineering.py
+│   ├── test_task3_experiment_tracking.py
+│   ├── test_task4_model_packaging.py
+│   ├── validate_cicd.py          # CI/CD validation script
+│   ├── test-api-cloud.sh         # Cloud-based API testing
+│   ├── sample-input.json         # High-risk test case
+│   └── sample-input-healthy.json # Low-risk test case
 ├── Dockerfile                    # Container definition
 ├── docker-compose.yml            # Container orchestration
 ├── requirements.txt              # Python dependencies (ML pipeline)
@@ -107,7 +111,7 @@ flake8 src/ tests/
 python run_tests.py --ci
 
 # Validate CI/CD pipeline configuration (optional)
-python scripts/validate_cicd.py
+python tests/validate_cicd.py
 ```
 
 ### GitHub Secrets Required
@@ -640,8 +644,8 @@ git push
 # Docker and all dependencies pre-installed
 
 # Test the API
-chmod +x scripts/test-api-cloud.sh
-./scripts/test-api-cloud.sh
+chmod +x tests/test-api-cloud.sh
+./tests/test-api-cloud.sh
 
 # Access API documentation at forwarded port
 ```
@@ -1005,7 +1009,7 @@ isort src/ tests/
 flake8 src/ tests/
 
 # Validation (optional)
-python scripts/validate_cicd.py
+python tests/validate_cicd.py
 ```
 
 #### **GitHub Secrets Required**

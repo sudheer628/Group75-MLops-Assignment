@@ -4,8 +4,8 @@ CI/CD Pipeline Validation Script
 Validates that all CI/CD components are properly configured
 
 Usage:
-    python scripts/validate_cicd.py
-    OR from root: python -m scripts.validate_cicd
+    python tests/validate_cicd.py
+    OR from root: python -m tests.validate_cicd
 """
 
 import os
@@ -17,9 +17,9 @@ import json
 
 def get_root_dir():
     """Get the project root directory"""
-    # If running from scripts/, go up one level
+    # If running from tests/, go up one level
     script_dir = Path(__file__).parent
-    if script_dir.name == 'scripts':
+    if script_dir.name == 'tests':
         return script_dir.parent
     # If running from root, use current directory
     return Path.cwd()
@@ -171,8 +171,7 @@ def validate_directory_structure():
         'src',
         'tests', 
         'data',
-        'models',
-        'scripts'
+        'models'
     ]
     
     missing_dirs = []

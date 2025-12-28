@@ -93,7 +93,7 @@ sudo apt-get install -y git
 
 ---
 
-## Phase 2: Clone Repository & Setup (15 minutes)
+## Phase 2: Clone Repository & Setup (5 minutes)
 
 ### Step 2.1: Clone Repository
 
@@ -103,79 +103,29 @@ git clone https://github.com/sudheer628/group75-mlops-assignment.git
 cd group75-mlops-assignment
 ```
 
-### Step 2.2: Create Docker Compose File
+**Files already included in repository:**
 
-**File: `docker-compose.yml`**
+- `docker-compose.yml` - Production-ready Docker Compose configuration
+- `nginx.conf` - Nginx reverse proxy configuration
 
-```yaml
-version: "3.8"
+### Step 2.2: Verify Docker Compose Configuration
 
-services:
-  api:
-    image: ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
-    container_name: heart-disease-api
-    ports:
-      - "127.0.0.1:8000:8000"
-    environment:
-      - MLFLOW_TRACKING_URI=https://mlflow-tracking-production-53fb.up.railway.app
-    restart: always
-    networks:
-      - api-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+The repository already contains `docker-compose.yml` with:
 
-  nginx:
-    image: nginx:latest
-    container_name: nginx-proxy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - api
-    restart: always
-    networks:
-      - api-network
+- API service pulling pre-built image from GHCR
+- API exposed on localhost:8000 (internal only)
+- Nginx service exposed on 0.0.0.0:80/443 (public)
+- Custom network for container communication
+- Health checks and auto-restart policies
 
-networks:
-  api-network:
-    driver: bridge
-```
+### Step 2.3: Verify Nginx Configuration
 
-### Step 2.3: Create Nginx Configuration
+The repository already contains `nginx.conf` with:
 
-**File: `nginx.conf`**
-
-```nginx
-server {
-    listen 80;
-    server_name myprojectdemo.online www.myprojectdemo.online;
-
-    location / {
-        proxy_pass http://api:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Timeouts
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-
-    # Health check endpoint
-    location /health {
-        proxy_pass http://api:8000/health;
-        access_log off;
-    }
-}
-```
+- Reverse proxy routing to API container
+- Domain configuration for `myprojectdemo.online` and `www.myprojectdemo.online`
+- Proper proxy headers for client IP tracking
+- Health check endpoint passthrough
 
 ### Step 2.4: Configure GCP Firewall
 
@@ -234,14 +184,33 @@ myprojectdemo.online has address 35.233.155.69
 docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
 ```
 
-### Step 4.2: Start Docker Compose
+### Step 4.2: Verify Nginx Configuration
+
+Before starting containers, verify the nginx.conf file is in the repository:
 
 ```bash
 cd /home/$USER/group75-mlops-assignment
+
+# Check nginx.conf exists
+cat nginx.conf
+
+# Expected output should show server block with proxy_pass to http://api:8000
+```
+
+### Step 4.3: Start Docker Compose
+
+```bash
 docker-compose up -d
 ```
 
-### Step 4.3: Verify Containers Running
+This will:
+
+1. Start the API container (pulls from GHCR)
+2. Start the Nginx container
+3. Mount nginx.conf into Nginx container at `/etc/nginx/conf.d/default.conf`
+4. Create custom network for container communication
+
+### Step 4.4: Verify Containers Running
 
 ```bash
 docker-compose ps
@@ -255,6 +224,29 @@ docker logs nginx-proxy
 NAME                COMMAND                  SERVICE             STATUS
 heart-disease-api   "python -m uvicorn..."   api                 Up 2 minutes (healthy)
 nginx-proxy         "/docker-entrypoint..."  nginx               Up 2 minutes
+```
+
+### Step 4.5: Verify Nginx Configuration is Loaded
+
+```bash
+# Check Nginx is running and configuration is loaded
+docker exec nginx-proxy nginx -t
+
+# Expected output:
+# nginx: the configuration file /etc/nginx/conf.d/default.conf syntax is ok
+# nginx: configuration file /etc/nginx/conf.d/default.conf test is successful
+```
+
+### Step 4.6: Reload Nginx Configuration (if needed)
+
+If you modify nginx.conf after containers are running:
+
+```bash
+# Reload Nginx without restarting
+docker exec nginx-proxy nginx -s reload
+
+# Or restart the entire docker-compose stack
+docker-compose restart nginx
 ```
 
 ---
@@ -375,29 +367,42 @@ docker-compose ps
 docker-compose logs -f
 ```
 
-### Step 6.2: Test Local Endpoints
+### Step 6.2: Verify Nginx Configuration
 
 ```bash
-# Health check
+# Check Nginx configuration syntax
+docker exec nginx-proxy nginx -t
+
+# View Nginx configuration
+docker exec nginx-proxy cat /etc/nginx/conf.d/default.conf
+
+# Check Nginx is listening on ports 80 and 443
+docker exec nginx-proxy netstat -tlnp | grep nginx
+```
+
+### Step 6.3: Test Local Endpoints (Internal)
+
+```bash
+# Health check (internal API)
 curl http://localhost:8000/health
 
-# API info
+# API info (internal API)
 curl http://localhost:8000/
 
-# Model info
+# Model info (internal API)
 curl http://localhost:8000/model/info
 ```
 
-### Step 6.3: Test Through Nginx
+### Step 6.4: Test Through Nginx (Localhost)
 
 ```bash
-# Health check
+# Health check through Nginx
 curl http://localhost/health
 
-# API info
+# API info through Nginx
 curl http://localhost/
 
-# Prediction
+# Prediction through Nginx
 curl -X POST http://localhost/predict \
   -H "Content-Type: application/json" \
   -d '{
@@ -405,6 +410,30 @@ curl -X POST http://localhost/predict \
     "chol": 250, "fbs": 0, "restecg": 1, "thalach": 150,
     "exang": 0, "oldpeak": 1.5, "slope": 2, "ca": 0, "thal": 3
   }'
+```
+
+### Step 6.5: Test Through Domain (Public)
+
+Once DNS is propagated (5-30 minutes), test via domain:
+
+```bash
+# Health check through domain
+curl http://myprojectdemo.online/health
+
+# API info through domain
+curl http://myprojectdemo.online/
+
+# Prediction through domain
+curl -X POST http://myprojectdemo.online/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 55, "sex": 1, "cp": 3, "trestbps": 140,
+    "chol": 250, "fbs": 0, "restecg": 1, "thalach": 150,
+    "exang": 0, "oldpeak": 1.5, "slope": 2, "ca": 0, "thal": 3
+  }'
+
+# View Nginx access logs
+docker logs nginx-proxy
 ```
 
 ---
@@ -735,14 +764,45 @@ dig myprojectdemo.online
 ### Nginx Connection Refused
 
 ```bash
-# Check Nginx status
-sudo systemctl status nginx
+# Check Nginx container is running
+docker-compose ps | grep nginx
 
-# Restart Nginx
-sudo systemctl restart nginx
+# Check Nginx configuration syntax
+docker exec nginx-proxy nginx -t
 
-# Check Nginx logs
-sudo tail -f /var/log/nginx/error.log
+# View Nginx error logs
+docker logs nginx-proxy
+
+# Check if Nginx is listening on ports 80/443
+docker exec nginx-proxy netstat -tlnp | grep nginx
+
+# Reload Nginx configuration
+docker exec nginx-proxy nginx -s reload
+
+# Or restart Nginx container
+docker-compose restart nginx
+```
+
+### Nginx Not Routing to API
+
+```bash
+# Verify nginx.conf is mounted correctly
+docker exec nginx-proxy cat /etc/nginx/conf.d/default.conf
+
+# Check if API container is running
+docker-compose ps | grep api
+
+# Test API is accessible from Nginx container
+docker exec nginx-proxy curl http://api:8000/health
+
+# Check Nginx access logs
+docker logs nginx-proxy
+
+# Verify custom network exists
+docker network ls | grep api-network
+
+# Inspect network to see connected containers
+docker network inspect api-network
 ```
 
 ### API Not Responding
@@ -756,19 +816,26 @@ gcloud compute firewall-rules list
 
 # Verify port 80 is open
 sudo netstat -tlnp | grep :80
+
+# Check if containers can communicate
+docker exec nginx-proxy ping api
 ```
 
 ---
 
 ## Deployment Checklist
 
-- [ ] GCP VM setup complete (Docker, Docker Compose, Nginx)
+- [ ] GCP VM setup complete (Docker, Docker Compose)
 - [ ] Repository cloned on VM
-- [ ] docker-compose.yml created
-- [ ] nginx.conf created
+- [ ] docker-compose.yml verified (already in repo)
+- [ ] nginx.conf verified (already in repo)
 - [ ] Firewall rules configured
 - [ ] DNS A record created
 - [ ] DNS propagation verified
+- [ ] Containers started with docker-compose up -d
+- [ ] Nginx configuration loaded and verified
+- [ ] API responding through Nginx
+- [ ] Domain routing working
 - [ ] Containers running
 - [ ] Health check passing
 - [ ] API responding through domain
