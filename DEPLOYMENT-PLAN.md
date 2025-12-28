@@ -77,13 +77,24 @@ sudo chmod +x /usr/local/bin/docker-compose
 docker-compose --version
 ```
 
-### Step 1.5: Install Nginx
+### Step 1.5: Stop System Nginx (Important!)
+
+The system nginx installed in Step 1.5 is **NOT used** in this deployment. We use **Docker nginx** instead.
+
+Stop the system nginx to avoid port conflicts:
 
 ```bash
-sudo apt-get install -y nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
+# Stop the system nginx service
+sudo systemctl stop nginx
+
+# Disable it from auto-starting
+sudo systemctl disable nginx
+
+# Verify it's stopped
+sudo systemctl status nginx
 ```
+
+**Why?** Docker nginx container needs port 80, and system nginx would block it.
 
 ### Step 1.6: Install Git
 
@@ -106,28 +117,37 @@ cd group75-mlops-assignment
 **Files already included in repository:**
 
 - `docker-compose.yml` - Production-ready Docker Compose configuration
-- `nginx.conf` - Nginx reverse proxy configuration
+- `nginx.conf` - Nginx reverse proxy configuration (for Docker container)
 
-### Step 2.2: Verify Docker Compose Configuration
+### Step 2.2: Understand Nginx Setup
+
+**Important:** This deployment uses **Docker Nginx**, not system nginx.
+
+- `nginx.conf` is mounted into Docker container at `/etc/nginx/conf.d/default.conf`
+- Docker automatically loads this configuration when container starts
+- **No manual nginx config directory setup needed**
+
+### Step 2.3: Verify Docker Compose Configuration
 
 The repository already contains `docker-compose.yml` with:
 
 - API service pulling pre-built image from GHCR
 - API exposed on localhost:8000 (internal only)
-- Nginx service exposed on 0.0.0.0:80/443 (public)
+- **Nginx service (Docker container)** exposed on 0.0.0.0:80/443 (public)
+- Volume mount: `./nginx.conf:/etc/nginx/conf.d/default.conf:ro`
 - Custom network for container communication
 - Health checks and auto-restart policies
 
-### Step 2.3: Verify Nginx Configuration
+### Step 2.4: Verify Nginx Configuration File
 
 The repository already contains `nginx.conf` with:
 
-- Reverse proxy routing to API container
+- Reverse proxy routing to API container (`proxy_pass http://api:8000`)
 - Domain configuration for `myprojectdemo.online` and `www.myprojectdemo.online`
 - Proper proxy headers for client IP tracking
 - Health check endpoint passthrough
 
-### Step 2.4: Configure GCP Firewall
+### Step 2.5: Configure GCP Firewall
 
 ```bash
 # Allow HTTP (port 80)
@@ -184,33 +204,51 @@ myprojectdemo.online has address 35.233.155.69
 docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
 ```
 
-### Step 4.2: Verify Nginx Configuration
+### Step 4.2: Verify System Nginx is Stopped
 
-Before starting containers, verify the nginx.conf file is in the repository:
+**Critical:** Make sure system nginx is not running (it blocks port 80):
 
 ```bash
-cd /home/$USER/group75-mlops-assignment
+# Check if system nginx is running
+sudo systemctl status nginx
 
-# Check nginx.conf exists
-cat nginx.conf
-
-# Expected output should show server block with proxy_pass to http://api:8000
+# If it's running, stop it
+sudo systemctl stop nginx
+sudo systemctl disable nginx
 ```
 
-### Step 4.3: Start Docker Compose
+### Step 4.3: Verify Nginx Configuration File
+
+The `nginx.conf` file in the repository will be automatically mounted into the Docker container:
+
+```bash
+# Verify nginx.conf exists in repository
+cat nginx.conf
+
+# Expected output should show:
+# - server block listening on port 80
+# - proxy_pass http://api:8000 (routes to API container)
+# - server_name myprojectdemo.online www.myprojectdemo.online
+```
+
+### Step 4.4: Start Docker Compose
 
 ```bash
 docker-compose up -d
 ```
 
-This will:
+**What happens automatically:**
 
-1. Start the API container (pulls from GHCR)
-2. Start the Nginx container
-3. Mount nginx.conf into Nginx container at `/etc/nginx/conf.d/default.conf`
-4. Create custom network for container communication
+1. Pulls API image from GHCR
+2. Starts API container on internal port 8000
+3. Starts Nginx container (Docker image)
+4. **Automatically mounts** `./nginx.conf` into container at `/etc/nginx/conf.d/default.conf`
+5. Nginx reads the configuration and starts routing traffic
+6. Creates custom network for container communication
 
-### Step 4.4: Verify Containers Running
+**No manual nginx config directory setup needed** - Docker handles it!
+
+### Step 4.5: Verify Containers Running
 
 ```bash
 docker-compose ps
@@ -226,10 +264,10 @@ heart-disease-api   "python -m uvicorn..."   api                 Up 2 minutes (h
 nginx-proxy         "/docker-entrypoint..."  nginx               Up 2 minutes
 ```
 
-### Step 4.5: Verify Nginx Configuration is Loaded
+### Step 4.6: Verify Nginx Configuration is Loaded
 
 ```bash
-# Check Nginx is running and configuration is loaded
+# Check Nginx configuration syntax inside container
 docker exec nginx-proxy nginx -t
 
 # Expected output:
@@ -237,17 +275,45 @@ docker exec nginx-proxy nginx -t
 # nginx: configuration file /etc/nginx/conf.d/default.conf test is successful
 ```
 
-### Step 4.6: Reload Nginx Configuration (if needed)
+### Step 4.7: Reload Nginx Configuration (if needed)
 
-If you modify nginx.conf after containers are running:
+If you modify `nginx.conf` after containers are running:
 
 ```bash
-# Reload Nginx without restarting
+# Reload Nginx without restarting container
 docker exec nginx-proxy nginx -s reload
 
 # Or restart the entire docker-compose stack
 docker-compose restart nginx
 ```
+
+---
+
+## How Nginx Configuration Works
+
+**Flow:**
+
+```
+Repository: ./nginx.conf
+    ↓
+docker-compose.yml volume mount
+    ↓
+Docker container: /etc/nginx/conf.d/default.conf
+    ↓
+Nginx reads configuration
+    ↓
+Nginx listens on port 80/443
+    ↓
+Routes traffic to http://api:8000
+```
+
+**Key Points:**
+
+- `nginx.conf` is in your repository root
+- Docker automatically mounts it when container starts
+- No manual file copying needed
+- No manual nginx reload needed (happens automatically on container start)
+- If you modify `nginx.conf`, use `docker exec nginx-proxy nginx -s reload`
 
 ---
 
@@ -820,30 +886,6 @@ sudo netstat -tlnp | grep :80
 # Check if containers can communicate
 docker exec nginx-proxy ping api
 ```
-
----
-
-## Deployment Checklist
-
-- [ ] GCP VM setup complete (Docker, Docker Compose)
-- [ ] Repository cloned on VM
-- [ ] docker-compose.yml verified (already in repo)
-- [ ] nginx.conf verified (already in repo)
-- [ ] Firewall rules configured
-- [ ] DNS A record created
-- [ ] DNS propagation verified
-- [ ] Containers started with docker-compose up -d
-- [ ] Nginx configuration loaded and verified
-- [ ] API responding through Nginx
-- [ ] Domain routing working
-- [ ] Containers running
-- [ ] Health check passing
-- [ ] API responding through domain
-- [ ] Update script created
-- [ ] Cron job configured
-- [ ] All tests passing
-- [ ] Screenshots captured
-- [ ] Documentation complete
 
 ---
 

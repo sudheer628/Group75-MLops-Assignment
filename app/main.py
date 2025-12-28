@@ -2,6 +2,7 @@
 Heart Disease Prediction FastAPI Application
 """
 import logging
+import time
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,11 +12,19 @@ import uvicorn
 from .config import settings
 from .models import PredictionInput, PredictionOutput, HealthResponse, ErrorResponse
 from .prediction import predictor
+from .metrics import (
+    metrics_endpoint,
+    record_prediction,
+    record_api_request,
+    record_api_error,
+    set_model_loaded,
+    record_model_inference_time,
+)
 
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -25,7 +34,7 @@ app = FastAPI(
     description=settings.API_DESCRIPTION,
     version=settings.API_VERSION,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add CORS middleware
@@ -44,9 +53,10 @@ async def startup_event():
     logger.info("Starting Heart Disease Prediction API")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info("Model will be loaded on first prediction request (lazy loading)")
-    
+
     # Create models directory if it doesn't exist
     from pathlib import Path
+
     models_dir = Path("models")
     models_dir.mkdir(parents=True, exist_ok=True)
 
@@ -85,38 +95,59 @@ async def health_check():
         status="healthy" if predictor.is_loaded else "unhealthy",
         version=settings.API_VERSION,
         ml_model_loaded=predictor.is_loaded,
-        timestamp=datetime.now().isoformat()
+        timestamp=datetime.now().isoformat(),
     )
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint for Grafana Cloud"""
+    return await metrics_endpoint()
 
 
 @app.post("/predict", response_model=PredictionOutput)
 async def predict_heart_disease(input_data: PredictionInput):
     """
     Predict heart disease risk based on clinical features
-    
+
     Returns prediction with confidence score and risk level.
     """
+    start_time = time.time()
+
     try:
         if not predictor.is_loaded:
+            record_api_error("/predict", "model_not_loaded")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Model not loaded. Service unavailable."
+                detail="Model not loaded. Service unavailable.",
             )
-        
+
         # Make prediction
         result = predictor.predict(input_data)
-        
-        logger.info(f"Prediction made: {result.prediction} (confidence: {result.confidence:.3f})")
-        
+
+        # Record metrics
+        latency = time.time() - start_time
+        record_prediction(result.prediction, result.confidence, latency)
+        record_api_request("/predict", "POST", 200, latency)
+
+        logger.info(
+            f"Prediction made: {result.prediction} (confidence: {result.confidence:.3f})"
+        )
+
         return result
-        
+
     except HTTPException:
+        latency = time.time() - start_time
+        record_api_request("/predict", "POST", 503, latency)
         raise
     except Exception as e:
+        latency = time.time() - start_time
+        record_api_request("/predict", "POST", 500, latency)
+        record_api_error("/predict", type(e).__name__)
         logger.error(f"Prediction error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prediction failed: {str(e)}"
+            detail=f"Prediction failed: {str(e)}",
         )
 
 
