@@ -78,8 +78,10 @@ We built a binary classifier that predicts whether a patient has heart disease o
 │   └── processed/                    # Processed data
 ├── .github/workflows/                # CI/CD pipelines
 │   ├── ci.yml                        # Main CI pipeline
-│   ├── container-build.yml           # Container build
-│   └── model-training.yml            # Training pipeline
+│   ├── container-build.yml           # Container build & push
+│   ├── deploy.yml                    # Auto-deploy to GCP VM
+│   ├── pr-validation.yml             # PR validation checks
+│   └── model-training.yml            # Model training pipeline
 ├── Dockerfile                        # Container definition
 ├── docker-compose.yml                # Container orchestration
 ├── nginx.conf                        # Nginx configuration
@@ -172,22 +174,19 @@ Location: `.github/workflows/`
 
 Workflows:
 
-1. CI Pipeline (`ci.yml`)
+| Workflow        | File                  | Trigger                   | Purpose                       |
+| --------------- | --------------------- | ------------------------- | ----------------------------- |
+| CI Pipeline     | `ci.yml`              | Push to main/develop, PRs | Linting, unit tests           |
+| Container Build | `container-build.yml` | After CI success          | Build & push Docker image     |
+| Deploy to GCP   | `deploy.yml`          | After Container Build     | Auto-deploy to production     |
+| PR Validation   | `pr-validation.yml`   | Pull Requests             | Quick validation before merge |
+| Model Training  | `model-training.yml`  | Manual, Weekly (Mon 2AM)  | Full model retraining         |
 
-   - Triggers: Push to main/develop, Pull Requests
-   - Jobs: Linting (flake8, black, isort), Unit tests
-   - Python versions: 3.11, 3.12
+Deployment flow (automatic on push to main):
 
-2. Container Build (`container-build.yml`)
-
-   - Triggers: After CI success, Manual dispatch
-   - Builds multi-arch images (AMD64, ARM64)
-   - Pushes to GitHub Container Registry
-
-3. Model Training (`model-training.yml`)
-   - Triggers: Manual dispatch, Weekly schedule
-   - Runs complete training pipeline
-   - Generates deployment artifacts
+```
+ci.yml --> container-build.yml --> deploy.yml --> Live at myprojectdemo.online
+```
 
 ### Task 6: Model Containerization
 
