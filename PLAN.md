@@ -1,6 +1,6 @@
 # Assignment-1 Implementation Plan
 
-This plan maps the assignment tasks (from `INSTRUCTIONS.md`) to recommended tools, platforms, and actionable steps. We can run the solution locally (Docker Desktop / Minikube) or in EKS (AWS Account required).
+This plan maps the assignment tasks (from `INSTRUCTIONS.md`) to recommended tools, platforms, and actionable steps.
 
 ---
 
@@ -46,24 +46,18 @@ Task 6 — Model Containerization (5 marks)
 - Local options:
   - Docker Desktop: `docker build` + `docker run`
   - Docker Compose: run app + optional local Prometheus/Grafana
-- Kubernetes option: provide manifests/Helm chart
 
 Task 7 — Production Deployment (7 marks)
 
-- Option 1 (local, teammate-friendly): **Minikube / Docker Desktop Kubernetes**
-  - Use Kustomize overlays or a Helm chart `overlays/minikube`
-  - Ingress: Minikube Ingress addon
-  - Simple stack: deploy model service + optional metrics exporter
-- Option 2 (AWS): **EKS**
-  - Provision with `Terraform` (or eksctl for quick setup)
-  - Use Helm for `kube-prometheus-stack` and model-serving tools (Seldon/KServe optional)
-  - Production ingress: AWS ALB or NLB via Ingress Controller
+- Application is deployed in a container under docker-composer inside GCP VM, domain http://myprojectdemo.online/ is routed to public IP of the VM and routed to container using nginx proxy. docker-compose maintains 2 containers - 1) Model from container repo 2) nginx.
+- application tested successfully from above method.
 
 Task 8 — Monitoring & Logging (3 marks)
 
-- Tools (local friendly): Prometheus + Grafana via Helm or Docker Compose
-- EKS: `kube-prometheus-stack` (Prometheus Operator) + Grafana; logs to CloudWatch (optional)
-- Simple model-drift: Evidently or simple custom metrics logged to MLflow/Prometheus
+- TBD (option: Grafana Cloud account - https://group75mlops.grafana.net/)
+- Grafana Cloud/Connections/Data Sources already added with "Heart-Disease-API" which has prometheus server URL as http://35.233.155.69:9090 (GCP VM)
+- further configurations at Grafana or Code level required. 
+- need assistance in testing logs and matrices.
 
 Task 9 — Documentation & Reporting (2 marks)
 

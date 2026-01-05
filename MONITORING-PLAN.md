@@ -1,5 +1,7 @@
 # TASK-8: Monitoring & Logging with Grafana Cloud
 
+## Status: ✅ COMPLETED
+
 ## Overview
 
 **Objective**: Implement monitoring and logging for the Heart Disease Prediction API using Grafana Cloud
@@ -8,411 +10,270 @@
 
 - **Grafana Cloud**: Hosted monitoring platform (https://group75mlops.grafana.net/)
 - **Grafana Alloy**: Lightweight agent for metrics & logs collection
-- **FastAPI**: Built-in metrics exposure
+- **FastAPI**: Built-in metrics exposure via `/metrics` endpoint
 
 **Architecture**:
 
 ```
-FastAPI Application
-    ↓
-Prometheus Metrics (Port 9090)
-    ↓
-Grafana Alloy (Collects metrics & logs)
-    ↓
-Grafana Cloud (Visualization & Alerts)
-    ↓
-Dashboards & Alerts
+┌─────────────────────────────────────────────────────────────────┐
+│                         GCP VM                                  │
+│  ┌─────────────────┐    ┌─────────────────┐                    │
+│  │ heart-disease-  │    │   nginx-proxy   │                    │
+│  │      api        │    │   (container)   │                    │
+│  │  (container)    │    │                 │                    │
+│  │  Port 8000      │    │   Port 80/443   │                    │
+│  │  /metrics       │    │                 │                    │
+│  └────────┬────────┘    └────────┬────────┘                    │
+│           │                      │                              │
+│           └──────────┬───────────┘                              │
+│                      │ Docker logs                              │
+│                      ▼                                          │
+│           ┌─────────────────────┐                              │
+│           │   Grafana Alloy     │                              │
+│           │   (systemd service) │                              │
+│           │                     │                              │
+│           │ • Scrapes /metrics  │                              │
+│           │ • Collects Docker   │                              │
+│           │   container logs    │                              │
+│           └──────────┬──────────┘                              │
+└──────────────────────┼──────────────────────────────────────────┘
+                       │
+                       ▼ HTTPS
+         ┌─────────────────────────────┐
+         │      Grafana Cloud          │
+         │  group75mlops.grafana.net   │
+         │                             │
+         │  ┌─────────┐ ┌───────────┐  │
+         │  │Prometheus│ │   Loki    │  │
+         │  │ Metrics  │ │   Logs    │  │
+         │  └────┬─────┘ └─────┬─────┘  │
+         │       │             │        │
+         │       ▼             ▼        │
+         │  ┌─────────────────────┐     │
+         │  │    Dashboards &     │     │
+         │  │       Alerts        │     │
+         │  └─────────────────────┘     │
+         └─────────────────────────────┘
 ```
 
 ---
 
 ## TASK-8 Requirements
 
-| Requirement       | Implementation               | Status |
-| ----------------- | ---------------------------- | ------ |
-| Monitoring        | Prometheus metrics via Alloy | ✓      |
-| Logging           | API request/response logs    | ✓      |
-| Visualization     | Grafana Cloud dashboards     | ✓      |
-| Alerts            | Threshold-based alerts       | ✓      |
-| Cloud Integration | Grafana Cloud                | ✓      |
+| Requirement       | Implementation                    | Status      |
+| ----------------- | --------------------------------- | ----------- |
+| Monitoring        | Prometheus metrics via Alloy      | ✅ Complete |
+| Logging           | Docker container logs via Alloy   | ✅ Complete |
+| Visualization     | Grafana Cloud dashboards          | ✅ Complete |
+| Alerts            | Threshold-based alerts (optional) | ✅ Optional |
+| Cloud Integration | Grafana Cloud                     | ✅ Complete |
 
 ---
 
-## Phase 1: Grafana Cloud Setup (10 minutes)
+## Implementation Summary
 
-### Step 1.1: Access Grafana Cloud
+### Grafana Cloud Configuration
 
-1. Go to: https://group75mlops.grafana.net/
-2. Login with your credentials
-3. Navigate to: **Connections → Configure**
+- **Organization**: `group75mlops`
+- **URL**: https://group75mlops.grafana.net/
+- **Metrics Endpoint**: `https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push`
+- **Logs Endpoint**: `https://logs-prod-028.grafana.net/loki/api/v1/push`
+- **Fleet Management**: `https://fleet-management-prod-018.grafana.net`
 
-### Step 1.2: Generate API Token
+### GCP VM Configuration
 
-**In Grafana Cloud UI:**
-
-1. Click **Account** (bottom left) → **API tokens**
-2. Click **New API token**
-3. Name: `alloy-metrics-logs`
-4. Role: `MetricsPublisher`
-5. Click **Create token**
-6. **Copy and save** the token (format: `glc_xxxxxxxxxxxxxxxxxxxx`)
-
-### Step 1.3: Get Alloy Installation Command
-
-**In Grafana Cloud UI:**
-
-1. Go to **Connections → Configure**
-2. Look for **Grafana Alloy** section
-3. You'll see a complete installation command with:
-   - `GCLOUD_HOSTED_METRICS_URL` - Metrics endpoint
-   - `GCLOUD_HOSTED_LOGS_URL` - Logs endpoint
-   - `GCLOUD_RW_API_KEY` - Your API token (already included!)
-
-**Example:**
-
-```bash
-GCLOUD_HOSTED_METRICS_ID="2884963" \
-GCLOUD_HOSTED_METRICS_URL="https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push" \
-GCLOUD_HOSTED_LOGS_ID="1438158" \
-GCLOUD_HOSTED_LOGS_URL="https://logs-prod-028.grafana.net/loki/api/v1/push" \
-GCLOUD_FM_URL="https://fleet-management-prod-018.grafana.net" \
-GCLOUD_FM_POLL_FREQUENCY="60s" \
-GCLOUD_FM_HOSTED_ID="1480365" \
-ARCH="amd64" \
-GCLOUD_RW_API_KEY="glc_xxxxxxxxxxxxxxxxxxxx" \
-/bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
-```
+- **VM Name**: `my-free-vm`
+- **Alloy Service**: Running as systemd service
+- **Config Location**: `/etc/alloy/config.alloy`
 
 ---
 
-## Phase 2: Install Grafana Alloy on GCP VM (5 minutes)
+## Alloy Configuration (Final Working Version)
 
-### Step 2.1: SSH into GCP VM
-
-```bash
-gcloud compute ssh INSTANCE_NAME --zone=us-central1-a
-```
-
-### Step 2.2: Run Alloy Installation
-
-Copy the complete command from Phase 1, Step 1.3 and run it on GCP VM:
-
-```bash
-GCLOUD_HOSTED_METRICS_ID="2884963" \
-GCLOUD_HOSTED_METRICS_URL="https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push" \
-GCLOUD_HOSTED_LOGS_ID="1438158" \
-GCLOUD_HOSTED_LOGS_URL="https://logs-prod-028.grafana.net/loki/api/v1/push" \
-GCLOUD_FM_URL="https://fleet-management-prod-018.grafana.net" \
-GCLOUD_FM_POLL_FREQUENCY="60s" \
-GCLOUD_FM_HOSTED_ID="1480365" \
-ARCH="amd64" \
-GCLOUD_RW_API_KEY="glc_xxxxxxxxxxxxxxxxxxxx" \
-/bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
-```
-
-**What this does:**
-
-- Downloads Grafana Alloy
-- Installs as systemd service
-- Configures metrics endpoint
-- Configures logs endpoint
-- Sets up API authentication
-
-### Step 2.3: Verify Installation
-
-```bash
-# Check if Alloy is running
-sudo systemctl status alloy
-
-# View logs
-sudo journalctl -u alloy -f
-
-# Expected output:
-# Active: active (running)
-```
-
-### Step 2.4: Test Connection in Grafana Cloud
-
-**In Grafana Cloud UI:**
-
-1. Go to **Connections → Configure**
-2. Click **Test Alloy connection** button
-3. Should show: "Connection successful"
-
----
-
-## Phase 3: Code Changes - Add Metrics to FastAPI
-
-### Step 3.1: Code Changes Completed
-
-The following code changes have been implemented:
-
-**1. Created `app/metrics.py`**
-
-Defines all Prometheus metrics:
-
-- `heart_disease_predictions_total` - Total predictions by result (healthy/disease)
-- `heart_disease_prediction_latency_seconds` - Prediction latency histogram
-- `api_requests_total` - Total API requests by endpoint/method/status
-- `api_request_latency_seconds` - API request latency histogram
-- `heart_disease_model_loaded` - Model loaded status (gauge)
-- `heart_disease_model_inference_seconds` - Model inference time
-- `api_errors_total` - Total API errors by type
-- `heart_disease_prediction_confidence` - Prediction confidence scores
-
-Helper functions:
-
-- `record_prediction()` - Record prediction metrics
-- `record_api_request()` - Record API request metrics
-- `record_api_error()` - Record error metrics
-- `set_model_loaded()` - Set model status
-- `record_model_inference_time()` - Record inference time
-
-**2. Updated `app/main.py`**
-
-- Added imports for metrics module
-- Added `/metrics` endpoint (Prometheus scrape endpoint)
-- Updated `/predict` endpoint to record metrics:
-  - Prediction result and confidence
-  - Request latency
-  - Error tracking
-  - HTTP status codes
-
-**3. Updated `requirements-api.txt`**
-
-- Added `prometheus-client>=0.19.0` dependency
-
----
-
-## Phase 4: Configure Alloy to Scrape Metrics (10 minutes)
-
-### Step 4.1: Create Alloy Configuration
-
-**File: `/etc/alloy/config.alloy`** (on GCP VM)
+**File: `/etc/alloy/config.alloy`** on GCP VM:
 
 ```alloy
+// ============================================
+// Remote Configuration
+// ============================================
+remotecfg {
+  url            = "https://fleet-management-prod-018.grafana.net"
+  id             = "my-free-vm"
+  poll_frequency = "60s"
+  basic_auth {
+    username = "1480365"
+    password = sys.env("GCLOUD_RW_API_KEY")
+  }
+}
+
+// ============================================
+// Prometheus Metrics
+// ============================================
+prometheus.remote_write "metrics_service" {
+  endpoint {
+    url = "https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push"
+    basic_auth {
+      username = "2884963"
+      password = sys.env("GCLOUD_RW_API_KEY")
+    }
+  }
+}
+
 prometheus.scrape "heart_disease_api" {
-  targets = [{"__address__" = "localhost:8000"}]
-  metrics_path = "/metrics"
+  targets         = [{"__address__" = "localhost:8000"}]
+  metrics_path    = "/metrics"
   scrape_interval = "15s"
-  scrape_timeout = "10s"
-
-  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+  scrape_timeout  = "10s"
+  forward_to      = [prometheus.remote_write.metrics_service.receiver]
 }
 
-prometheus.remote_write "grafana_cloud" {
+// ============================================
+// Loki Logs
+// ============================================
+loki.write "grafana_cloud_loki" {
   endpoint {
-    url = env("GCLOUD_HOSTED_METRICS_URL")
-
-    headers = {
-      "Authorization" = "Bearer " + env("GCLOUD_RW_API_KEY"),
+    url = "https://logs-prod-028.grafana.net/loki/api/v1/push"
+    basic_auth {
+      username = "1438158"
+      password = sys.env("GCLOUD_RW_API_KEY")
     }
   }
 }
 
-loki.source.syslog "api_logs" {
-  listen_address = "127.0.0.1:514"
-
-  forward_to = [loki.write.grafana_cloud.receiver]
+// Docker container logs collection
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
 }
 
-loki.write "grafana_cloud" {
-  endpoint {
-    url = env("GCLOUD_HOSTED_LOGS_URL")
+loki.source.docker "docker_logs" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.containers.targets
+  labels     = {
+    job  = "docker",
+    host = "my-free-vm",
+  }
+  forward_to = [loki.process.docker_logs.receiver]
+}
 
-    headers = {
-      "Authorization" = "Bearer " + env("GCLOUD_RW_API_KEY"),
+// Process and relabel docker logs
+loki.process "docker_logs" {
+  stage.docker {}
+
+  stage.labels {
+    values = {
+      container_name = "",
     }
   }
+
+  forward_to = [loki.write.grafana_cloud_loki.receiver]
 }
 ```
 
-### Step 4.2: Reload Alloy Configuration
+---
 
-```bash
-# Reload Alloy with new configuration
-sudo systemctl reload alloy
+## LogQL Queries for Grafana
 
-# Verify it's still running
-sudo systemctl status alloy
+### Basic Queries
+
+```logql
+# All Docker logs
+{job="docker"}
+
+# Filter by log content
+{job="docker"} |= "predict"
+{job="docker"} |= "health"
+{job="docker"} |= "uvicorn"
+```
+
+### Error Filtering
+
+```logql
+# Errors (case-insensitive)
+{job="docker"} |~ "(?i)error"
+
+# Multiple log levels
+{job="docker"} |~ "ERROR|WARN|CRITICAL"
+
+# HTTP errors (4xx, 5xx)
+{job="docker"} |~ "4[0-9]{2}|5[0-9]{2}"
+```
+
+### Exclude Noise
+
+```logql
+# Exclude health checks
+{job="docker"} != "health"
+
+# Exclude successful responses
+{job="docker"} != "200"
+```
+
+### Rate/Count Queries
+
+```logql
+# Error rate over time
+count_over_time({job="docker"} |= "error" [5m])
+
+# Request rate
+rate({job="docker"} [1m])
 ```
 
 ---
 
-## Phase 5: Create Grafana Dashboards (15 minutes)
+## Prometheus Queries for Dashboards
 
-### Step 5.1: Create Dashboard
+### Prediction Metrics
 
-**In Grafana Cloud UI:**
+```promql
+# Total predictions rate
+sum(rate(heart_disease_predictions_total[5m]))
 
-1. Click **Dashboards** (left sidebar)
-2. Click **New → New Dashboard**
-3. Click **Add visualization**
-4. Select **Prometheus** as data source
+# Predictions by result (healthy vs disease)
+sum by (prediction_result) (rate(heart_disease_predictions_total[5m]))
 
-### Step 5.2: Add Panels
-
-**Panel 1: Total Predictions**
-
-```
-Query: sum(rate(heart_disease_predictions_total[5m]))
-Visualization: Stat
-Title: Predictions per 5 minutes
+# Prediction latency (95th percentile)
+histogram_quantile(0.95, rate(heart_disease_prediction_latency_seconds_bucket[5m]))
 ```
 
-**Panel 2: Prediction Latency**
+### API Performance
 
-```
-Query: histogram_quantile(0.95, rate(heart_disease_prediction_latency_seconds_bucket[5m]))
-Visualization: Graph
-Title: 95th Percentile Latency
-```
+```promql
+# API request rate
+sum(rate(api_requests_total[5m]))
 
-**Panel 3: Predictions by Result**
+# Error rate
+sum(rate(api_errors_total[5m]))
 
-```
-Query: sum by (prediction_result) (rate(heart_disease_predictions_total[5m]))
-Visualization: Pie Chart
-Title: Healthy vs Disease Predictions
-```
-
-**Panel 4: API Requests**
-
-```
-Query: sum by (status) (rate(api_requests_total[5m]))
-Visualization: Graph
-Title: API Requests by Status
-```
-
-### Step 5.3: Save Dashboard
-
-1. Click **Save** (top right)
-2. Name: `Heart Disease API Monitoring`
-3. Click **Save**
-
----
-
-## Phase 6: Setup Alerts (Optional)
-
-### Step 6.1: Create Alert Rule
-
-**In Grafana Cloud UI:**
-
-1. Go to **Alerting → Alert Rules**
-2. Click **New alert rule**
-3. Configure:
-   - **Name**: `High Prediction Latency`
-   - **Query**: `histogram_quantile(0.95, rate(heart_disease_prediction_latency_seconds_bucket[5m])) > 1`
-   - **Condition**: `> 1 second`
-   - **For**: `5 minutes`
-4. Click **Save**
-
-### Step 6.2: Setup Notification Channel
-
-1. Go to **Alerting → Contact points**
-2. Click **New contact point**
-3. Select **Email** or **Slack**
-4. Configure and save
-
----
-
----
-
-## Testing Metrics
-
-### Test 1: Check Metrics Endpoint
-
-```bash
-# From local machine or GCP VM
-curl http://localhost:8000/metrics
-
-# Expected output: Prometheus metrics in text format
-# HELP heart_disease_predictions_total Total number of predictions made
-# TYPE heart_disease_predictions_total counter
-# heart_disease_predictions_total{prediction_result="healthy"} 0.0
-# ...
-```
-
-### Test 2: Make Predictions and Check Metrics
-
-```bash
-# Make a prediction
-curl -X POST http://localhost:8000/predict \
-  -H "Content-Type: application/json" \
-  -d '{"age": 55, "sex": 1, "cp": 3, "trestbps": 140, "chol": 250, "fbs": 0, "restecg": 1, "thalach": 150, "exang": 0, "oldpeak": 1.5, "slope": 2, "ca": 0, "thal": 3}'
-
-# Check metrics again
-curl http://localhost:8000/metrics | grep heart_disease_predictions_total
-
-# Expected: Counter incremented
-# heart_disease_predictions_total{prediction_result="disease"} 1.0
-```
-
-### Test 3: Check Alloy Status
-
-```bash
-# On GCP VM
-sudo systemctl status alloy
-
-# View logs
-sudo journalctl -u alloy -f
-
-# Expected: Alloy running and scraping metrics
+# Model loaded status
+heart_disease_model_loaded
 ```
 
 ---
 
-## Environment Variables on GCP VM
+## Dashboards Created
 
-### Option: Export API Token as Environment Variable
+### 1. Heart Disease API Monitoring Dashboard
 
-Instead of hardcoding in config files, you can export as environment variable:
+**Panels:**
 
-```bash
-# On GCP VM
-export GCLOUD_RW_API_KEY="glc_xxxxxxxxxxxxxxxxxxxx"
-export GCLOUD_HOSTED_METRICS_URL="https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push"
-export GCLOUD_HOSTED_LOGS_URL="https://logs-prod-028.grafana.net/loki/api/v1/push"
+- Total Predictions (Stat)
+- Predictions by Result - Healthy vs Disease (Pie Chart)
+- Prediction Latency 95th Percentile (Graph)
+- API Requests by Status (Graph)
+- Model Status (Gauge)
+- Error Rate (Graph)
 
-# Verify
-echo $GCLOUD_RW_API_KEY
-```
+### 2. Logs Dashboard
 
-**To make persistent:**
+**Panels:**
 
-```bash
-# Add to ~/.bashrc or ~/.profile
-echo 'export GCLOUD_RW_API_KEY="glc_xxxxxxxxxxxxxxxxxxxx"' >> ~/.bashrc
-echo 'export GCLOUD_HOSTED_METRICS_URL="https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push"' >> ~/.bashrc
-echo 'export GCLOUD_HOSTED_LOGS_URL="https://logs-prod-028.grafana.net/loki/api/v1/push"' >> ~/.bashrc
-
-# Reload
-source ~/.bashrc
-```
+- Live Docker Logs Stream
+- Error Logs Filter
+- Request Logs
 
 ---
 
-## Troubleshooting
-
-### Issue: Metrics endpoint returns 404
-
-**Solution**:
-
-```bash
-# Verify API is running
-docker-compose ps
-
-# Check logs
-docker logs heart-disease-api
-
-# Verify endpoint
-curl http://localhost:8000/health
-curl http://localhost:8000/metrics
-```
-
-### Issue: Alloy not collecting metrics
-
-**Solution**:
+## Alloy Management Commands
 
 ```bash
 # Check Alloy status
@@ -421,19 +282,55 @@ sudo systemctl status alloy
 # View Alloy logs
 sudo journalctl -u alloy -f
 
-# Verify Alloy can reach API
-curl http://localhost:8000/metrics
+# Restart Alloy
+sudo systemctl restart alloy
+
+# Reload configuration
+sudo systemctl reload alloy
 ```
 
-### Issue: Metrics not appearing in Grafana Cloud
+---
+
+## Troubleshooting
+
+### Issue: "timestamp too old" errors
+
+**Cause**: Grafana Cloud Loki rejects logs older than ~7 days
 
 **Solution**:
 
-1. Verify Alloy is running: `sudo systemctl status alloy`
-2. Check Alloy logs: `sudo journalctl -u alloy -f`
-3. Verify API token is correct
-4. Wait 1-2 minutes for metrics to appear
-5. In Grafana Cloud, click **Test Alloy connection**
+```bash
+# Clear old Docker logs
+sudo sh -c 'truncate -s 0 /var/lib/docker/containers/*/*-json.log'
+
+# Clear Alloy position files
+sudo rm -rf /var/lib/alloy/data/loki.source.docker.*
+
+# Restart Alloy
+sudo systemctl restart alloy
+```
+
+### Issue: Docker logs not appearing
+
+**Solution**:
+
+```bash
+# Ensure Alloy has Docker socket access
+sudo usermod -aG docker alloy
+sudo systemctl restart alloy
+```
+
+### Issue: Metrics not appearing
+
+**Solution**:
+
+```bash
+# Verify API metrics endpoint
+curl http://localhost:8000/metrics
+
+# Check Alloy scrape status
+sudo journalctl -u alloy | grep -i scrape
+```
 
 ---
 
@@ -441,202 +338,53 @@ curl http://localhost:8000/metrics
 
 ### Metrics Collected
 
-**Predictions**:
+| Metric                                     | Description                     |
+| ------------------------------------------ | ------------------------------- |
+| `heart_disease_predictions_total`          | Total predictions by result     |
+| `heart_disease_prediction_latency_seconds` | Prediction latency histogram    |
+| `api_requests_total`                       | API requests by endpoint/status |
+| `api_request_latency_seconds`              | API request latency             |
+| `heart_disease_model_loaded`               | Model loaded status (0/1)       |
+| `api_errors_total`                         | Total API errors by type        |
 
-- Total predictions made
-- Predictions by result (healthy vs disease)
-- Prediction latency (95th percentile, etc.)
-- Prediction confidence scores
+### Logs Collected
 
-**API Performance**:
-
-- Total API requests
-- Request latency by endpoint
-- HTTP status codes (200, 500, 503, etc.)
-- Error rates and types
-
-**Model Health**:
-
-- Model loaded status
-- Model inference time
-- Error tracking
-
-### Logs Collected (via Grafana Alloy)
-
-**Application Logs**:
-
-- API startup/shutdown
-- Prediction requests
-- Errors and exceptions
-- Model loading status
-
-**System Logs**:
-
-- Alloy agent status
-- Metrics collection status
-- Connection health
-
-### What's NOT Monitored
-
-✗ TASK-1 logs (data acquisition) - one-time, not production
-✗ TASK-2 logs (model training) - one-time, not production
-✗ TASK-3 logs (experiment tracking) - handled by MLflow
-✗ TASK-4 logs (model packaging) - one-time, not production
-✗ CI/CD logs - handled by GitHub Actions
+| Source            | Label        | Description             |
+| ----------------- | ------------ | ----------------------- |
+| heart-disease-api | job="docker" | API application logs    |
+| nginx-proxy       | job="docker" | Nginx access/error logs |
 
 ---
 
-## Prometheus Queries for Grafana Dashboards
+## Files Modified for Monitoring
 
-### Total Predictions
-
-```
-sum(rate(heart_disease_predictions_total[5m]))
-```
-
-### Predictions by Result
-
-```
-sum by (prediction_result) (rate(heart_disease_predictions_total[5m]))
-```
-
-### Prediction Latency (95th percentile)
-
-```
-histogram_quantile(0.95, rate(heart_disease_prediction_latency_seconds_bucket[5m]))
-```
-
-### API Request Rate
-
-```
-sum(rate(api_requests_total[5m]))
-```
-
-### Error Rate
-
-```
-sum(rate(api_errors_total[5m]))
-```
-
-### Model Status
-
-```
-heart_disease_model_loaded
-```
-
----
-
-## Approach Comparison
-
-### **Grafana Alloy (Recommended - What We're Using)**
-
-**Pros:**
-
-- One-liner installation
-- Automatic configuration
-- Includes metrics + logs
-- Grafana manages everything
-- Simpler setup
-
-**Cons:**
-
-- Less control
-- Newer tool
-
----
-
-## Information Required from You
-
-Before proceeding with GCP VM deployment, provide:
-
-1. **Grafana Cloud Organization Name**:
-
-   - Answer: `group75mlops`
-
-2. **Metrics URL** (from Alloy command):
-
-   - Example: `https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push`
-
-3. **Logs URL** (from Alloy command):
-
-   - Example: `https://logs-prod-028.grafana.net/loki/api/v1/push`
-
-4. **API Token**:
-
-   - Format: `glc_xxxxxxxxxxxxxxxxxxxx`
-
-5. **Deployment Environment**:
-   - [ ] GCP VM only
-   - [ ] Local + GCP VM
-
----
-
-## Approach Comparison
-
-### **Grafana Alloy (Recommended - What We're Using)**
-
-**Pros:**
-
-- One-liner installation
-- Automatic configuration
-- Includes metrics + logs
-- Grafana manages everything
-- Simpler setup
-
-**Cons:**
-
-- Less control
-- Newer tool
-
----
-
-## Information Required from You
-
-Before proceeding with code changes, please provide:
-
-1. **Grafana Cloud Organization Name**:
-
-   - Answer: `group75mlops`
-
-2. **Metrics URL** (from Alloy command):
-
-   - Example: `https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push`
-
-3. **Logs URL** (from Alloy command):
-
-   - Example: `https://logs-prod-028.grafana.net/loki/api/v1/push`
-
-4. **API Token**:
-
-   - Format: `glc_xxxxxxxxxxxxxxxxxxxx`
-
-5. **Deployment Environment**:
-   - [ ] GCP VM only
-   - [ ] Local + GCP VM
-
----
-
-## Next Steps
-
-1. **Complete Grafana Cloud Setup** (Phase 1)
-2. **Install Grafana Alloy** (Phase 2)
-3. **Test Alloy Connection** (Phase 2, Step 2.4)
-4. **Provide Information** (above section)
-5. **Confirm Approach**
-6. **Proceed with Code Changes**
+| File                   | Changes                               |
+| ---------------------- | ------------------------------------- |
+| `app/metrics.py`       | Prometheus metrics definitions        |
+| `app/main.py`          | `/metrics` endpoint, metric recording |
+| `requirements-api.txt` | Added `prometheus-client>=0.19.0`     |
 
 ---
 
 ## Summary
 
-| Phase                          | Duration    | Status      |
-| ------------------------------ | ----------- | ----------- |
-| Phase 1: Grafana Cloud Setup   | 10 min      | Pending     |
-| Phase 2: Install Grafana Alloy | 5 min       | Pending     |
-| Phase 3: FastAPI Metrics       | 20 min      | Pending     |
-| Phase 4: Configure Alloy       | 10 min      | Pending     |
-| Phase 5: Dashboards            | 15 min      | Pending     |
-| Phase 6: Alerts                | 10 min      | Optional    |
-| **Total**                      | **~70 min** | **Pending** |
+| Phase                          | Duration | Status      |
+| ------------------------------ | -------- | ----------- |
+| Phase 1: Grafana Cloud Setup   | 10 min   | ✅ Complete |
+| Phase 2: Install Grafana Alloy | 5 min    | ✅ Complete |
+| Phase 3: FastAPI Metrics       | 20 min   | ✅ Complete |
+| Phase 4: Configure Alloy       | 10 min   | ✅ Complete |
+| Phase 5: Dashboards            | 15 min   | ✅ Complete |
+| Phase 6: Alerts                | 10 min   | ✅ Optional |
+| **Total**                      | ~70 min  | ✅ Complete |
 
-**Ready to proceed after your confirmation!**
+---
+
+## Access URLs
+
+- **Grafana Cloud**: https://group75mlops.grafana.net/
+- **API Health**: http://myprojectdemo.online/health
+- **API Metrics**: http://myprojectdemo.online/metrics (internal: localhost:8000/metrics)
+- **API Docs**: http://myprojectdemo.online/docs
+
+**TASK-8: Monitoring & Logging - COMPLETED ✅**
