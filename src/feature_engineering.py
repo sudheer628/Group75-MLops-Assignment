@@ -160,7 +160,7 @@ def prepare_target_variable(y):
 def engineer_features(X):
     """
     Create additional engineered features
-    
+
     Uses the centralized feature store to ensure consistency
     between training and inference.
 
@@ -176,7 +176,7 @@ def engineer_features(X):
 
     # Use feature store for consistent feature engineering
     from src.feature_store import feature_store
-    
+
     original_cols = X.shape[1]
     X_eng = feature_store.compute_features(X)
 

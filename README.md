@@ -21,6 +21,7 @@ We built a binary classifier that predicts whether a patient has heart disease o
 - API Documentation: http://myprojectdemo.online/docs
 - MLflow Experiment Tracking: https://mlflow-tracking-production-53fb.up.railway.app/
 - Grafana Metrics Dashboard: https://group75mlops.grafana.net/d/suwdlv9/group75-assignment
+- SonarCloud Code Quality: https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment
 
 ---
 
@@ -50,6 +51,7 @@ We built a binary classifier that predicts whether a patient has heart disease o
 | Containerization    | Docker                            |
 | Container Registry  | GitHub Container Registry (GHCR)  |
 | CI/CD               | GitHub Actions                    |
+| Code Quality        | SonarCloud                        |
 | Cloud Platform      | Google Cloud Platform (GCP)       |
 | Reverse Proxy       | Nginx                             |
 | Monitoring          | Grafana Cloud (Prometheus + Loki) |
@@ -82,7 +84,7 @@ We built a binary classifier that predicts whether a patient has heart disease o
 │   ├── raw/                          # Raw data
 │   └── processed/                    # Processed data
 ├── .github/workflows/                # CI/CD pipelines
-│   ├── ci.yml                        # Main CI pipeline
+│   ├── ci.yml                        # Main CI pipeline + SonarCloud
 │   ├── container-build.yml           # Container build & push
 │   ├── deploy.yml                    # Auto-deploy to GCP VM
 │   ├── pr-validation.yml             # PR validation checks
@@ -90,6 +92,7 @@ We built a binary classifier that predicts whether a patient has heart disease o
 ├── Dockerfile                        # Container definition
 ├── docker-compose.yml                # Container orchestration
 ├── nginx.conf                        # Nginx configuration
+├── sonar-project.properties          # SonarCloud configuration
 ├── requirements.txt                  # ML dependencies
 └── requirements-api.txt              # API dependencies
 ```
@@ -181,7 +184,7 @@ Workflows:
 
 | Workflow        | File                  | Trigger                   | Purpose                       |
 | --------------- | --------------------- | ------------------------- | ----------------------------- |
-| CI Pipeline     | `ci.yml`              | Push to main/develop, PRs | Linting, unit tests           |
+| CI Pipeline     | `ci.yml`              | Push to main/develop, PRs | Linting, tests, SonarCloud    |
 | Container Build | `container-build.yml` | After CI success          | Build & push Docker image     |
 | Deploy to GCP   | `deploy.yml`          | After Container Build     | Auto-deploy to production     |
 | PR Validation   | `pr-validation.yml`   | Pull Requests             | Quick validation before merge |
@@ -191,7 +194,11 @@ Deployment flow (automatic on push to main):
 
 ```
 ci.yml --> container-build.yml --> deploy.yml --> Live at myprojectdemo.online
+   |
+   +--> SonarCloud Analysis (parallel)
 ```
+
+Code quality dashboard: https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment
 
 ### Task 6: Model Containerization
 
@@ -460,6 +467,7 @@ Tests also run automatically in CI/CD (GitHub Actions) on every push.
 | DEPLOYMENT-PLAN.md   | GCP deployment guide       |
 | MONITORING-PLAN.md   | Grafana Cloud setup        |
 | PIPELINE_WORKFLOW.md | Development workflow guide |
+| SONARQUBE.md         | SonarCloud integration     |
 | SETUP.md             | Quick setup instructions   |
 
 ---
@@ -470,6 +478,7 @@ Tests also run automatically in CI/CD (GitHub Actions) on every push.
 - Container: ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api
 - MLflow Dashboard: https://mlflow-tracking-production-53fb.up.railway.app/
 - Grafana Dashboard: https://group75mlops.grafana.net/d/suwdlv9/group75-assignment
+- SonarCloud: https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment
 
 ---
 

@@ -43,13 +43,13 @@ The whole process takes about 6-10 minutes from push to production.
 
 We have 5 workflow files in `.github/workflows/`. Here's what each one does:
 
-| Workflow        | File                | When it Runs               | What it Does                   |
-| --------------- | ------------------- | -------------------------- | ------------------------------ |
-| CI Pipeline     | ci.yml              | Every push to main/develop | Linting, unit tests            |
-| Container Build | container-build.yml | After CI passes            | Builds and pushes Docker image |
-| Deploy to GCP   | deploy.yml          | After container build      | Deploys to production VM       |
-| PR Validation   | pr-validation.yml   | On pull requests           | Quick checks before merge      |
-| Model Training  | model-training.yml  | Manual or weekly           | Retrains ML models             |
+| Workflow        | File                | When it Runs               | What it Does                    |
+| --------------- | ------------------- | -------------------------- | ------------------------------- |
+| CI Pipeline     | ci.yml              | Every push to main/develop | Linting, unit tests, SonarCloud |
+| Container Build | container-build.yml | After CI passes            | Builds and pushes Docker image  |
+| Deploy to GCP   | deploy.yml          | After container build      | Deploys to production VM        |
+| PR Validation   | pr-validation.yml   | On pull requests           | Quick checks before merge       |
+| Model Training  | model-training.yml  | Manual or weekly           | Retrains ML models              |
 
 ---
 
@@ -63,9 +63,16 @@ This is the first workflow that runs when we push code. It checks code quality a
 
 - Runs flake8 for linting
 - Checks code formatting with black and isort
+- Validates feature store schema and parity
 - Runs all our unit tests on Python 3.11 and 3.12
+- Runs SonarCloud static code analysis
 
 If any of these fail, the pipeline stops and we get notified. This prevents bad code from going further.
+
+**SonarCloud Integration:**
+
+We added SonarCloud to automatically scan for bugs, vulnerabilities, and code smells. Results are visible at:
+https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment
 
 ---
 
@@ -216,6 +223,8 @@ git push origin main
     |
     +-> CI Pipeline (~2-3 min) - Tests pass?
     |       |
+    |       +-> SonarCloud Analysis (parallel)
+    |       |
     +-> Container Build (~3-5 min) - Image built?
     |       |
     +-> Deploy to GCP (~1-2 min) - Health check passes?
@@ -225,3 +234,5 @@ git push origin main
 ```
 
 Total time: About 6-10 minutes from push to production.
+
+Code quality results available at: https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment
