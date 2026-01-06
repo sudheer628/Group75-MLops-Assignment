@@ -176,6 +176,14 @@ Response:
 
 ## Screenshots
 
+### GitHub Code Repo
+
+![Github Code repo](images/github-repo.jpg)
+
+### GHCR (container repo)
+
+![GHCR](images/github-container-repo.jpg)
+
 ### CI CD Jobs
 
 ![CI CD Jobs](images/cicd_jobs.jpg)
@@ -202,11 +210,11 @@ Response:
 
 ### Grafana Logs1
 
-![Grafana](images/grafana-2.jpg)
+![Grafana Logs1](images/grafana-2.jpg)
 
 ### Grafana Logs2
 
-![Grafana](images/grafana-3.jpg)
+![Grafana Logs2](images/grafana-3.jpg)
 
 ### GCP VM
 
@@ -214,7 +222,11 @@ Response:
 
 ### GCP VM Docker Compose
 
-![GCP VM](images/gcp-vm-2.jpg)
+![Docker Compose](images/gcp-vm-2.jpg)
+
+### API Testing
+
+![API Testing](images/api-testing.jpg)
 
 ## Team
 
