@@ -188,6 +188,10 @@ Response:
 
 ![CI CD Jobs](images/cicd_jobs.jpg)
 
+### Github Workflow
+
+![Github Workflow](images/github-workflow.jpg)
+
 ### SonarQube integration through SonarCloud
 
 ![SonarQube](images/sonar.jpg)
