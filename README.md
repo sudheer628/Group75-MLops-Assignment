@@ -7,10 +7,17 @@ This is our Group75 MLOps course assignment where we built an end-to-end ML pipe
 We created a binary classifier that predicts whether a patient has heart disease based on 13 clinical features from the UCI Heart Disease dataset. The model is deployed as a REST API on a GCP VM, and we set up proper CI/CD, monitoring, and code quality checks.
 
 Live API: http://myprojectdemo.online
+Docs: http://myprojectdemo.online/docs
 
 ## Architecture
 
-(Architecture diagram to be added)
+### System Architecture
+
+![System Architecture](images/architecture.drawio.png)
+
+### Data & ML Pipeline Flow
+
+![Data and ML Pipeline](images/data_ml-flow_pipeline.png)
 
 ## Quick Links
 
