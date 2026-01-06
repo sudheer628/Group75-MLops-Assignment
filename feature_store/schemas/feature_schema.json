@@ -1,0 +1,145 @@
+{
+  "version": "1.0",
+  "created_at": "2026-01-06T10:33:37.585391",
+  "raw_features": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+  ],
+  "engineered_features": [
+    "age_group",
+    "chol_age_ratio",
+    "heart_rate_reserve",
+    "risk_score",
+    "age_sex_interaction",
+    "cp_exang_interaction"
+  ],
+  "all_features": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal",
+    "age_group",
+    "chol_age_ratio",
+    "heart_rate_reserve",
+    "risk_score",
+    "age_sex_interaction",
+    "cp_exang_interaction"
+  ],
+  "feature_definitions": {
+    "age": {
+      "type": "int",
+      "min": 1,
+      "max": 120
+    },
+    "sex": {
+      "type": "int",
+      "min": 0,
+      "max": 1
+    },
+    "cp": {
+      "type": "int",
+      "min": 0,
+      "max": 3
+    },
+    "trestbps": {
+      "type": "int",
+      "min": 50,
+      "max": 300
+    },
+    "chol": {
+      "type": "int",
+      "min": 100,
+      "max": 600
+    },
+    "fbs": {
+      "type": "int",
+      "min": 0,
+      "max": 1
+    },
+    "restecg": {
+      "type": "int",
+      "min": 0,
+      "max": 2
+    },
+    "thalach": {
+      "type": "int",
+      "min": 60,
+      "max": 220
+    },
+    "exang": {
+      "type": "int",
+      "min": 0,
+      "max": 1
+    },
+    "oldpeak": {
+      "type": "float",
+      "min": 0.0,
+      "max": 10.0
+    },
+    "slope": {
+      "type": "int",
+      "min": 0,
+      "max": 2
+    },
+    "ca": {
+      "type": "int",
+      "min": 0,
+      "max": 4
+    },
+    "thal": {
+      "type": "int",
+      "min": 0,
+      "max": 3
+    },
+    "age_group": {
+      "type": "int",
+      "min": 0,
+      "max": 3
+    },
+    "chol_age_ratio": {
+      "type": "float",
+      "min": 1.0,
+      "max": 20.0
+    },
+    "heart_rate_reserve": {
+      "type": "float",
+      "min": -100,
+      "max": 100
+    },
+    "risk_score": {
+      "type": "float",
+      "min": 0,
+      "max": 100
+    },
+    "age_sex_interaction": {
+      "type": "float",
+      "min": 0,
+      "max": 150
+    },
+    "cp_exang_interaction": {
+      "type": "int",
+      "min": 0,
+      "max": 3
+    }
+  }
+}

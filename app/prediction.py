@@ -113,7 +113,33 @@ class HeartDiseasePredictor:
         return df
     
     def _engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Apply the same feature engineering as during training"""
+        """
+        Apply the same feature engineering as during training
+        
+        Uses the centralized feature store to ensure training/inference parity.
+        """
+        try:
+            # Use feature store for consistent feature engineering
+            import sys
+            from pathlib import Path
+            
+            # Add project root to path if needed (for Docker container)
+            project_root = Path(__file__).parent.parent
+            if str(project_root) not in sys.path:
+                sys.path.insert(0, str(project_root))
+            
+            from src.feature_store import feature_store
+            
+            df_eng = feature_store.compute_features(df)
+            return df_eng
+            
+        except ImportError as e:
+            # Fallback to inline implementation if feature store not available
+            logger.warning(f"Feature store not available, using fallback: {e}")
+            return self._engineer_features_fallback(df)
+    
+    def _engineer_features_fallback(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Fallback feature engineering if feature store is not available"""
         from sklearn.preprocessing import LabelEncoder
         
         df_eng = df.copy()

@@ -1,44 +1,51 @@
-# New Teammate Setup Guide
+# Setup Guide
 
-## Quick Start (5 minutes)
+In this guide, We explain how to set up the development environment for our Heart Disease Prediction project. We have tried to make it as simple as possible - should take about 5 minutes.
 
-### 1. Clone & Setup Environment
+---
+
+## Quick Start
+
+### 1. Clone the Repository
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd <repository-name>
+git clone https://github.com/sudheer628/group75-mlops-assignment.git
+cd group75-mlops-assignment
+```
 
-# Create conda environment
-conda create -n myenv python=3.9
+### 2. Create Conda Environment
+
+We used Python 3.12 for this project. Create the conda environment with:
+
+```bash
+conda create -n myenv python=3.12
 conda activate myenv
+```
 
-# Install dependencies
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Validate Setup
+### 4. Verify Everything Works
+
+Run the test suite to make sure everything is set up correctly:
 
 ```bash
-# Run comprehensive validation + all tests (recommended)
 python run_tests.py
-
-# OR run only validation (quick environment check)
-python run_tests.py --validate-only
 ```
 
-**Expected Result**: All validation steps should show ✅ PASS
-
-### 3. What You Should See
+If everything is working, you should see output like this:
 
 ```
 STEP ENV: Environment Validation
-Environment      ✅ PASS
-Dependencies     ✅ PASS
-MLflow          ✅ PASS
-Structure       ✅ PASS
+Environment      PASS
+Dependencies     PASS
+MLflow           PASS
+Structure        PASS
 
-🎉 Environment validation successful!
+Environment validation successful!
 
 Running Task 1 Tests...
 All Task 1 tests passed!
@@ -52,96 +59,99 @@ All Task 3 tests passed!
 Running Task 4 Tests...
 All Task 4 tests passed!
 
-🎉 ALL TESTS PASSED! Your implementation is working correctly.
+ALL TESTS PASSED!
 ```
 
-## If Setup Fails
+---
 
-### Common Issues & Solutions
+## Running Tests
 
-**❌ Environment not activated**
+We have unit tests for each task in the `tests/` folder. Here's how to run them:
 
 ```bash
-conda activate myenv
+# Run all tests
+python run_tests.py
+
+# Run tests for a specific task
+python run_tests.py --task1    # Data acquisition tests
+python run_tests.py --task2    # Feature engineering tests
+python run_tests.py --task3    # MLflow tracking tests
+python run_tests.py --task4    # Model packaging tests
+
+# Just validate environment (quick check)
+python run_tests.py --validate-only
 ```
 
-**❌ Missing dependencies**
+The tests also run automatically in our CI/CD pipeline whenever we push code to GitHub.
+
+---
+
+## Running Individual Tasks
+
+Each task has its own Python script in the `src/` folder:
+
+```bash
+# Make sure environment is activated first
+conda activate myenv
+
+# Task 1: Data Acquisition & EDA
+python src/data_acquisition_eda.py
+
+# Task 2: Feature Engineering & Model Training
+python src/feature_engineering.py
+
+# Task 3: Upload to MLflow (Railway)
+python src/experiment_tracking.py
+
+# Task 4: Package Models for Deployment
+python src/model_packaging.py
+
+# Validate Feature Store (runs in CI/CD too)
+python src/feature_store.py --validate
+```
+
+---
+
+## Common Issues
+
+### "conda environment not activated"
+
+Make sure to run `conda activate myenv` before any Python commands.
+
+### "ModuleNotFoundError"
+
+Install dependencies again:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**❌ Environment validation failed**
+### "MLflow connection failed"
 
-```bash
-# Run validation only to see specific issues
-python run_tests.py --validate-only
-```
-
-**❌ Import errors**
-
-- Make sure `conda activate myenv` is run before any Python commands
-- Verify all packages installed: `pip list`
-
-## What Gets Created
-
-After successful setup, you'll have:
-
-- ✅ `data/processed/` - Processed datasets
-- ✅ `models/` - Trained models
-- ✅ Railway MLflow connection - Shared experiment tracking
-- ✅ Complete test suite passing
-
-## Next Steps
-
-1. **Read the workflow guide**: `PIPELINE_WORKFLOW.md`
-2. **Access MLflow UI**: https://mlflow-tracking-production-53fb.up.railway.app
-3. **Start developing**: `python src/experiment_tracking.py`
-
-## Team Commands Reference
-
-```bash
-# Always activate environment first
-conda activate myenv
-
-# Run validation + all tests (comprehensive)
-python run_tests.py
-
-# Run only environment validation (quick check)
-python run_tests.py --validate-only
-
-# Skip validation, run tests only (not recommended)
-python run_tests.py --skip-validation
-
-# Individual task tests
-python run_tests.py --task1             # Test Task 1
-python run_tests.py --task2             # Test Task 2
-python run_tests.py --task3             # Test Task 3
-python run_tests.py --task4             # Test Task 4
-
-# Individual tasks (development)
-python src/data_acquisition_eda.py      # Task 1: Data & EDA
-python src/feature_engineering.py       # Task 2: Models (local)
-python src/experiment_tracking.py       # Task 3: Upload to Railway
-python src/model_packaging.py           # Task 4: Package for deployment
-```
-
-## Important Notes
-
-- **Always use `conda activate myenv`** before running any commands
-- **Model versions only change** when running `python src/experiment_tracking.py`
-- **Railway MLflow** is shared - all teammates see the same experiments
-- **Generated files** (packages/, environments/) are gitignored - they regenerate automatically
-
-## Help & Documentation
-
-- **Complete workflow**: `PIPELINE_WORKFLOW.md`
-- **Project overview**: `README.md`
-- **Assignment details**: `INSTRUCTIONS.md`
-- **Implementation plan**: `PLAN.md`
+Check your internet connection. The MLflow server is hosted on Railway at:
+https://mlflow-tracking-production-53fb.up.railway.app
 
 ---
 
-**Setup Time**: ~5 minutes  
-**First Test Run**: ~3 minutes (downloads data, trains models)  
-**Subsequent Runs**: ~30 seconds
+## Project URLs
+
+Once set up, you can access:
+
+- **Live API**: http://myprojectdemo.online
+- **API Docs**: http://myprojectdemo.online/docs
+- **MLflow Dashboard**: https://mlflow-tracking-production-53fb.up.railway.app
+- **Grafana Monitoring**: https://group75mlops.grafana.net
+
+---
+
+## What Gets Created
+
+After running the tasks, these directories will have generated files:
+
+- `data/processed/` - Cleaned and processed datasets
+- `models/` - Trained model files (.joblib)
+- `feature_store/` - Feature schemas and metadata
+- `packages/` - Deployment packages (gitignored)
+- `environments/` - Environment snapshots (gitignored)
+
+The processed data and models are committed to the repo, but packages and environments are regenerated as needed.

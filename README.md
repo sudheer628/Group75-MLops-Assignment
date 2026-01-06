@@ -70,7 +70,12 @@ We built a binary classifier that predicts whether a patient has heart disease o
 │   ├── data_acquisition_eda.py       # Task 1: Data & EDA
 │   ├── feature_engineering.py        # Task 2: Feature engineering
 │   ├── experiment_tracking.py        # Task 3: MLflow tracking
-│   └── model_packaging.py            # Task 4: Model packaging
+│   ├── model_packaging.py            # Task 4: Model packaging
+│   └── feature_store.py              # Feature store implementation
+├── feature_store/                    # Feature store data
+│   ├── features/                     # Parquet feature files
+│   ├── schemas/                      # Schema definitions
+│   └── metadata/                     # Feature metadata
 ├── tests/                            # Unit tests
 ├── models/                           # Trained model artifacts
 ├── data/                             # Dataset storage
@@ -81,7 +86,7 @@ We built a binary classifier that predicts whether a patient has heart disease o
 │   ├── container-build.yml           # Container build & push
 │   ├── deploy.yml                    # Auto-deploy to GCP VM
 │   ├── pr-validation.yml             # PR validation checks
-│   └── model-training.yml            # Model training pipeline
+│   └── model-training.yml            # Full model retraining
 ├── Dockerfile                        # Container definition
 ├── docker-compose.yml                # Container orchestration
 ├── nginx.conf                        # Nginx configuration
@@ -249,6 +254,34 @@ Log queries:
 {job="docker"} |~ "(?i)error"     # Error logs
 ```
 
+### Feature Store
+
+Location: `src/feature_store.py`, `feature_store/`
+
+We implemented a simple Parquet-based offline feature store to solve the training/serving skew problem. Before this, we had duplicate feature engineering code in both training (`src/feature_engineering.py`) and inference (`app/prediction.py`). If someone updated one but forgot the other, the model would behave differently in production.
+
+The feature store provides:
+
+- Single source of truth for feature engineering logic
+- Schema validation to catch data quality issues
+- Training/inference parity checks
+- Parquet storage for computed features
+
+Feature store validation runs in CI/CD to ensure consistency:
+
+```bash
+python src/feature_store.py --validate
+```
+
+Directory structure:
+
+```
+feature_store/
+  features/       # Parquet files with computed features
+  schemas/        # JSON schema definitions
+  metadata/       # Metadata about saved feature sets
+```
+
 ---
 
 ## Quick Start
@@ -310,7 +343,7 @@ git clone https://github.com/sudheer628/group75-mlops-assignment.git
 cd group75-mlops-assignment
 
 # Create environment
-conda create -n myenv python=3.9
+conda create -n myenv python=3.12
 conda activate myenv
 
 # Install dependencies
@@ -390,6 +423,16 @@ Required for CI/CD:
 
 ## Testing
 
+We have unit tests for each task in the `tests/` folder:
+
+- `test_task1_data_acquisition.py` - Data loading, quality checks, EDA
+- `test_task2_feature_engineering.py` - Feature engineering, model training
+- `test_task3_experiment_tracking.py` - MLflow experiment tracking
+- `test_task4_model_packaging.py` - Model packaging and validation
+- `test_feature_store.py` - Feature store validation and parity checks
+
+Run tests with:
+
 ```bash
 # Run all tests
 python run_tests.py
@@ -403,6 +446,8 @@ python run_tests.py --task4
 # Validate environment only
 python run_tests.py --validate-only
 ```
+
+Tests also run automatically in CI/CD (GitHub Actions) on every push.
 
 ---
 

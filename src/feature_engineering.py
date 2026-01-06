@@ -160,6 +160,9 @@ def prepare_target_variable(y):
 def engineer_features(X):
     """
     Create additional engineered features
+    
+    Uses the centralized feature store to ensure consistency
+    between training and inference.
 
     Args:
         X (pd.DataFrame): Feature matrix
@@ -171,32 +174,17 @@ def engineer_features(X):
     print("FEATURE ENGINEERING")
     print("=" * 50)
 
-    X_eng = X.copy()
+    # Use feature store for consistent feature engineering
+    from src.feature_store import feature_store
+    
+    original_cols = X.shape[1]
+    X_eng = feature_store.compute_features(X)
 
-    # Age groups
-    X_eng["age_group"] = pd.cut(X_eng["age"], bins=[0, 40, 50, 60, 100], labels=["young", "middle_aged", "senior", "elderly"])
-    X_eng["age_group"] = LabelEncoder().fit_transform(X_eng["age_group"])
-
-    # BMI-like feature (if we had height/weight, we'd use actual BMI)
-    # Using cholesterol to age ratio as a proxy for metabolic health
-    X_eng["chol_age_ratio"] = X_eng["chol"] / X_eng["age"]
-
-    # Exercise capacity indicator
-    # Higher thalach (max heart rate) relative to age indicates better fitness
-    X_eng["heart_rate_reserve"] = X_eng["thalach"] - (220 - X_eng["age"])
-
-    # Risk score based on multiple factors
-    X_eng["risk_score"] = X_eng["age"] * 0.1 + X_eng["chol"] * 0.01 + X_eng["trestbps"] * 0.1 + X_eng["oldpeak"] * 10
-
-    # Interaction features
-    X_eng["age_sex_interaction"] = X_eng["age"] * X_eng["sex"]
-    X_eng["cp_exang_interaction"] = X_eng["cp"] * X_eng["exang"]
-
-    print(f"Original features: {X.shape[1]}")
+    print(f"Original features: {original_cols}")
     print(f"Engineered features: {X_eng.shape[1]}")
-    print(f"New features added: {X_eng.shape[1] - X.shape[1]}")
+    print(f"New features added: {X_eng.shape[1] - original_cols}")
 
-    new_features = [col for col in X_eng.columns if col not in X.columns]
+    new_features = feature_store.ENGINEERED_FEATURES
     print(f"New feature names: {new_features}")
 
     return X_eng
