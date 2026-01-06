@@ -196,15 +196,15 @@ Response:
 
 ![MLflow](images/mlflow-3.jpg)
 
-### Grafana Monitoring
+### Grafana Metrics
 
 ![Grafana](images/grafana-1.jpg)
 
-### Grafana Metrics
+### Grafana Logs1
 
 ![Grafana](images/grafana-2.jpg)
 
-### Grafana Logs
+### Grafana Logs2
 
 ![Grafana](images/grafana-3.jpg)
 
@@ -215,7 +215,6 @@ Response:
 ### GCP VM Docker Compose
 
 ![GCP VM](images/gcp-vm-2.jpg)
-
 
 ## Team
 
