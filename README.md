@@ -196,17 +196,17 @@ Response:
 
 ![MLflow](images/mlflow-1.jpg)
 
-### MLflow Dashboard
+### MLflow Models
 
-![MLflow](images/mlflow-2.jpg)
+![MLflow Models](images/mlflow-2.jpg)
 
-### MLflow Dashboard 2
+### MLflow Experiments
 
-![MLflow](images/mlflow-3.jpg)
+![MLflow Experiments](images/mlflow-3.jpg)
 
 ### Grafana Metrics
 
-![Grafana](images/grafana-1.jpg)
+![Grafana Metrics](images/grafana-1.jpg)
 
 ### Grafana Logs1
 

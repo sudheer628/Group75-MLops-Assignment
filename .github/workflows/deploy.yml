@@ -44,24 +44,29 @@ jobs:
             echo "Restarting containers..."
             docker-compose up -d
             
-            # Wait for containers to start
-            echo "Waiting for containers to initialize..."
-            sleep 15
+            # Wait for containers to start and model to load
+            echo "Waiting for containers to initialize and model to load from Railway..."
+            echo "This may take up to 2 minutes..."
             
-            # Health check
+            # Health check with retries
             echo "Running health check..."
-            if curl -sf http://localhost:8000/health > /dev/null; then
-                echo "Health check PASSED"
-                echo "=========================================="
-                echo "Deployment completed successfully!"
-                echo "API is live at: http://myprojectdemo.online"
-                echo "=========================================="
-            else
-                echo "Health check FAILED"
-                echo "Checking container logs..."
-                docker-compose logs --tail=50
-                exit 1
-            fi
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+                if curl -sf http://localhost:8000/health > /dev/null; then
+                    echo "Health check PASSED on attempt $i"
+                    echo "=========================================="
+                    echo "Deployment completed successfully!"
+                    echo "API is live at: http://myprojectdemo.online"
+                    echo "=========================================="
+                    exit 0
+                fi
+                echo "Attempt $i: API not ready yet, waiting 10 seconds..."
+                sleep 10
+            done
+            
+            echo "Health check FAILED after 12 attempts (2 minutes)"
+            echo "Checking container logs..."
+            docker-compose logs --tail=100
+            exit 1
 
       - name: Deployment Summary
         if: success()

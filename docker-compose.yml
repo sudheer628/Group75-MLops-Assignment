@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   api:
     image: ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
