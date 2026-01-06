@@ -1,394 +1,151 @@
-# Heart Disease Prediction - MLOps Pipeline
+# Heart Disease Prediction - MLOps Assignment
 
-This is our MLOps course assignment where we built an end-to-end machine learning pipeline for predicting heart disease. We went through the complete lifecycle - from getting the data, training models, tracking experiments, containerizing the application, setting up CI/CD, deploying to cloud, and adding monitoring. It was a good learning experience putting all these pieces together.
+This is our Group75 MLOps course assignment where we built an end-to-end ML pipeline for predicting heart disease. The goal was to learn how to take a machine learning model from development to production, covering everything from data acquisition to monitoring.
 
-## Project Overview
+## What We Built
 
-We built a binary classifier that predicts whether a patient has heart disease or not, using the UCI Heart Disease dataset. The model is served through a REST API that we deployed on a GCP VM, and we set up Grafana Cloud to monitor everything. The whole pipeline is automated with GitHub Actions.
+We created a binary classifier that predicts whether a patient has heart disease based on 13 clinical features from the UCI Heart Disease dataset. The model is deployed as a REST API on a GCP VM, and we set up proper CI/CD, monitoring, and code quality checks.
 
-### Key Features
-
-- Automated ML pipeline from data acquisition to deployment
-- Experiment tracking with MLflow (Railway-hosted)
-- Containerized FastAPI application
-- CI/CD with GitHub Actions
-- Production deployment on GCP VM
-- Monitoring and logging with Grafana Cloud
-
-### Live Deployment
-
-- API Endpoint: http://myprojectdemo.online
-- API Documentation: http://myprojectdemo.online/docs
-- MLflow Experiment Tracking: https://mlflow-tracking-production-53fb.up.railway.app/
-- Grafana Metrics Dashboard: https://group75mlops.grafana.net/d/suwdlv9/group75-assignment
-- SonarCloud Code Quality: https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment
-
----
+Live API: http://myprojectdemo.online
 
 ## Architecture
 
-```
-+------------------+     +------------------+     +------------------+
-|   Data Source    |     |  Model Training  |     |   Experiment     |
-|   (UCI Dataset)  | --> |  (scikit-learn)  | --> |   Tracking       |
-|                  |     |                  |     |   (MLflow)       |
-+------------------+     +------------------+     +------------------+
-                                                          |
-                                                          v
-+------------------+     +------------------+     +------------------+
-|   Monitoring     |     |   Production     |     |   Container      |
-|   (Grafana)      | <-- |   (GCP VM)       | <-- |   (Docker)       |
-+------------------+     +------------------+     +------------------+
-```
+(Architecture diagram to be added)
 
-### Technology Stack
+## Quick Links
 
-| Component           | Technology                        |
-| ------------------- | --------------------------------- |
-| ML Framework        | scikit-learn                      |
-| API Framework       | FastAPI                           |
-| Experiment Tracking | MLflow (Railway)                  |
-| Containerization    | Docker                            |
-| Container Registry  | GitHub Container Registry (GHCR)  |
-| CI/CD               | GitHub Actions                    |
-| Code Quality        | SonarCloud                        |
-| Cloud Platform      | Google Cloud Platform (GCP)       |
-| Reverse Proxy       | Nginx                             |
-| Monitoring          | Grafana Cloud (Prometheus + Loki) |
+| Resource           | URL                                                                           |
+| ------------------ | ----------------------------------------------------------------------------- |
+| Live API           | http://myprojectdemo.online                                                   |
+| API Docs           | http://myprojectdemo.online/docs                                              |
+| MLflow Experiments | https://mlflow-tracking-production-53fb.up.railway.app/                       |
+| Grafana Dashboard  | https://group75mlops.grafana.net/d/suwdlv9/group75-assignment                 |
+| SonarCloud         | https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment |
+| GitHub Repo        | https://github.com/sudheer628/group75-mlops-assignment                        |
 
----
+## Tech Stack
+
+- Python 3.12, scikit-learn, FastAPI
+- Docker, Docker Compose, Nginx
+- GitHub Actions for CI/CD
+- MLflow on Railway for experiment tracking
+- Grafana Cloud for monitoring
+- SonarCloud for code quality
+- GCP VM for deployment
 
 ## Project Structure
 
 ```
 .
-├── app/                              # FastAPI application
-│   ├── main.py                       # API endpoints
-│   ├── models.py                     # Pydantic schemas
-│   ├── prediction.py                 # ML prediction logic
-│   ├── metrics.py                    # Prometheus metrics
-│   └── config.py                     # Configuration
-├── src/                              # ML pipeline source code
-│   ├── data_acquisition_eda.py       # Task 1: Data & EDA
-│   ├── feature_engineering.py        # Task 2: Feature engineering
-│   ├── experiment_tracking.py        # Task 3: MLflow tracking
-│   ├── model_packaging.py            # Task 4: Model packaging
-│   └── feature_store.py              # Feature store implementation
-├── feature_store/                    # Feature store data
-│   ├── features/                     # Parquet feature files
-│   ├── schemas/                      # Schema definitions
-│   └── metadata/                     # Feature metadata
-├── tests/                            # Unit tests
-├── models/                           # Trained model artifacts
-├── data/                             # Dataset storage
-│   ├── raw/                          # Raw data
-│   └── processed/                    # Processed data
-├── .github/workflows/                # CI/CD pipelines
-│   ├── ci.yml                        # Main CI pipeline + SonarCloud
-│   ├── container-build.yml           # Container build & push
-│   ├── deploy.yml                    # Auto-deploy to GCP VM
-│   ├── pr-validation.yml             # PR validation checks
-│   └── model-training.yml            # Full model retraining
-├── Dockerfile                        # Container definition
-├── docker-compose.yml                # Container orchestration
-├── nginx.conf                        # Nginx configuration
-├── sonar-project.properties          # SonarCloud configuration
-├── requirements.txt                  # ML dependencies
-└── requirements-api.txt              # API dependencies
+├── app/                    # FastAPI application
+├── src/                    # ML pipeline scripts
+│   ├── data_acquisition_eda.py
+│   ├── feature_engineering.py
+│   ├── experiment_tracking.py
+│   ├── model_packaging.py
+│   └── feature_store.py
+├── tests/                  # Unit tests
+├── models/                 # Trained models
+├── feature_store/          # Feature store data
+├── .github/workflows/      # CI/CD pipelines
+├── Dockerfile
+├── docker-compose.yml
+└── sonar-project.properties
 ```
 
----
-
-## Task Implementation
+## Tasks Completed
 
 ### Task 1: Data Acquisition and EDA
 
-Source: `src/data_acquisition_eda.py`
+We downloaded the UCI Heart Disease dataset and did exploratory analysis. The dataset has 303 samples with 14 features.
 
-- Dataset: UCI Heart Disease (303 samples, 14 features)
-- Automated download from UCI ML Repository
-- Data quality assessment and cleaning
-- Statistical analysis and visualization
+Script: `src/data_acquisition_eda.py`
 
-Output files:
+### Task 2: Feature Engineering and Model Training
 
-- `data/raw/heart_disease_raw.csv`
-- `data/processed/features.csv`
-- `data/processed/target.csv`
-- `data/processed/data_quality_report.json`
+We engineered 6 new features and trained multiple models (Logistic Regression, Random Forest, Gradient Boosting, SVM). Logistic Regression performed best with ROC-AUC of 0.96.
 
-### Task 2: Feature Engineering and Model Development
-
-Source: `src/feature_engineering.py`
-
-Models trained:
-
-- Logistic Regression
-- Random Forest
-- Gradient Boosting
-- Support Vector Machine (SVM)
-
-Engineered features (6 new):
-
-- age_group: Age categorization
-- chol_age_ratio: Cholesterol to age ratio
-- heart_rate_reserve: Max HR - (220 - age)
-- risk_score: Composite risk metric
-- age_sex_interaction: Age \* Sex
-- cp_exang_interaction: Chest pain \* Exercise angina
-
-Best model performance:
-
-- Algorithm: Logistic Regression
-- ROC-AUC: 0.9610
-- Accuracy: >85%
-
-Output files:
-
-- `models/best_model.joblib`
-- `models/evaluation_results.json`
-- `models/feature_names.json`
+Script: `src/feature_engineering.py`
 
 ### Task 3: Experiment Tracking
 
-Source: `src/experiment_tracking.py`
+We used MLflow hosted on Railway to track all our experiments, parameters, metrics, and model artifacts.
 
-MLflow Server: https://mlflow-tracking-production-53fb.up.railway.app
-
-Tracked components:
-
-- Parameters: Hyperparameters, dataset info
-- Metrics: Accuracy, precision, recall, F1, ROC-AUC
-- Artifacts: Models, reports, confusion matrices
-- Model Registry: Versioned models with aliases
+Script: `src/experiment_tracking.py`
 
 ### Task 4: Model Packaging
 
-Source: `src/model_packaging.py`
+We packaged the trained model with all dependencies for deployment.
 
-Package contents:
-
-- Model files (joblib, pickle, MLflow format)
-- Preprocessing pipeline
-- Environment specifications
-- Configuration files
-- Deployment documentation
-
-Output: `packages/{timestamp}/`
+Script: `src/model_packaging.py`
 
 ### Task 5: CI/CD Pipeline
 
-Location: `.github/workflows/`
+We set up GitHub Actions with 5 workflows for linting, testing, building containers, and deploying. The pipeline automatically deploys to production when we push to main.
 
-Workflows:
+See: [PIPELINE_WORKFLOW.md](PIPELINE_WORKFLOW.md)
 
-| Workflow        | File                  | Trigger                   | Purpose                       |
-| --------------- | --------------------- | ------------------------- | ----------------------------- |
-| CI Pipeline     | `ci.yml`              | Push to main/develop, PRs | Linting, tests, SonarCloud    |
-| Container Build | `container-build.yml` | After CI success          | Build & push Docker image     |
-| Deploy to GCP   | `deploy.yml`          | After Container Build     | Auto-deploy to production     |
-| PR Validation   | `pr-validation.yml`   | Pull Requests             | Quick validation before merge |
-| Model Training  | `model-training.yml`  | Manual, Weekly (Mon 2AM)  | Full model retraining         |
+### Task 6: Containerization
 
-Deployment flow (automatic on push to main):
+We containerized the FastAPI application with Docker and used Nginx as reverse proxy.
 
-```
-ci.yml --> container-build.yml --> deploy.yml --> Live at myprojectdemo.online
-   |
-   +--> SonarCloud Analysis (parallel)
-```
+Files: `Dockerfile`, `docker-compose.yml`, `nginx.conf`
 
-Code quality dashboard: https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment
+### Task 7: Cloud Deployment
 
-### Task 6: Model Containerization
+We deployed to a GCP VM with automated deployments via GitHub Actions.
 
-Files: `Dockerfile`, `docker-compose.yml`
+See: [DEPLOYMENT-PLAN.md](DEPLOYMENT-PLAN.md)
 
-Container image: `ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api`
+### Task 8: Monitoring
 
-API Endpoints:
-| Endpoint | Method | Description |
-|---------------|--------|--------------------------------|
-| / | GET | API information |
-| /health | GET | Health check |
-| /predict | POST | Heart disease prediction |
-| /model/info | GET | Model metadata |
-| /metrics | GET | Prometheus metrics |
-| /docs | GET | Swagger documentation |
+We set up Grafana Cloud with Prometheus metrics and Loki logs using Grafana Alloy agent.
 
-### Task 7: Production Deployment
+See: [MONITORING-PLAN.md](MONITORING-PLAN.md)
 
-Platform: Google Cloud Platform (GCP VM)
+### Code Quality
 
-Deployment details:
+We integrated SonarCloud for static code analysis to catch bugs and code smells.
 
-- Domain: myprojectdemo.online
-- VM IP: 35.233.155.69
-- Containers: heart-disease-api, nginx-proxy
-- Orchestration: Docker Compose
-
-Architecture:
-
-```
-Internet --> Domain (myprojectdemo.online)
-         --> GCP VM (35.233.155.69)
-         --> Nginx (Port 80)
-         --> FastAPI (Port 8000)
-```
-
-### Task 8: Monitoring and Logging
-
-Platform: Grafana Cloud (https://group75mlops.grafana.net/)
-
-Components:
-
-- Grafana Alloy: Metrics and logs collection agent
-- Prometheus: Metrics storage and querying
-- Loki: Log aggregation
-
-Metrics collected:
-
-- heart_disease_predictions_total
-- heart_disease_prediction_latency_seconds
-- api_requests_total
-- api_errors_total
-
-Log queries:
-
-```logql
-{job="docker"}                    # All container logs
-{job="docker"} |= "predict"       # Prediction requests
-{job="docker"} |~ "(?i)error"     # Error logs
-```
+See: [SONARQUBE.md](SONARQUBE.md)
 
 ### Feature Store
 
-Location: `src/feature_store.py`, `feature_store/`
+We built a simple Parquet-based feature store to ensure training/inference parity.
 
-We implemented a simple Parquet-based offline feature store to solve the training/serving skew problem. Before this, we had duplicate feature engineering code in both training (`src/feature_engineering.py`) and inference (`app/prediction.py`). If someone updated one but forgot the other, the model would behave differently in production.
+Script: `src/feature_store.py`
 
-The feature store provides:
-
-- Single source of truth for feature engineering logic
-- Schema validation to catch data quality issues
-- Training/inference parity checks
-- Parquet storage for computed features
-
-Feature store validation runs in CI/CD to ensure consistency:
+## How to Run Locally
 
 ```bash
-python src/feature_store.py --validate
-```
-
-Directory structure:
-
-```
-feature_store/
-  features/       # Parquet files with computed features
-  schemas/        # JSON schema definitions
-  metadata/       # Metadata about saved feature sets
-```
-
----
-
-## Quick Start
-
-### Option 1: Purchased this domain in namecheap.com for application deployment
-
-Application Domain: http://myprojectdemo.online/ (routed to GCP VM public IP)
-
-Windows Command Prompt (CMD):
-
-```cmd
-curl http://myprojectdemo.online/
-
-curl http://myprojectdemo.online/health
-
-curl http://myprojectdemo.online/model/info
-
-curl -X POST http://myprojectdemo.online/predict -H "Content-Type: application/json" -d "{\"age\": 55, \"sex\": 1, \"cp\": 3, \"trestbps\": 140, \"chol\": 250, \"fbs\": 0, \"restecg\": 1, \"thalach\": 150, \"exang\": 0, \"oldpeak\": 1.5, \"slope\": 2, \"ca\": 0, \"thal\": 3}"
-```
-
-Bash/Linux/Mac:
-
-```bash
-# API info
-curl http://myprojectdemo.online/
-
-# Health check
-curl http://myprojectdemo.online/health
-
-# Model info
-curl http://myprojectdemo.online/model/info
-
-# Make prediction
-curl -X POST http://myprojectdemo.online/predict \
-  -H "Content-Type: application/json" \
-  -d '{
-    "age": 55, "sex": 1, "cp": 3, "trestbps": 140,
-    "chol": 250, "fbs": 0, "restecg": 1, "thalach": 150,
-    "exang": 0, "oldpeak": 1.5, "slope": 2, "ca": 0, "thal": 3
-  }'
-```
-
-### Option 2: Run Container Locally
-
-```bash
-# Pull and run
-docker pull ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
-docker run -p 8000:8000 ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api:latest
-
-# Test
-curl http://localhost:8000/health
-```
-
-### Option 3: Local Development
-
-```bash
-# Clone repository
+# Clone and setup
 git clone https://github.com/sudheer628/group75-mlops-assignment.git
 cd group75-mlops-assignment
-
-# Create environment
 conda create -n myenv python=3.12
 conda activate myenv
-
-# Install dependencies
 pip install -r requirements.txt
 
 # Run tests
 python run_tests.py
 
 # Run individual tasks
-python src/data_acquisition_eda.py    # Task 1
-python src/feature_engineering.py     # Task 2
-python src/experiment_tracking.py     # Task 3
-python src/model_packaging.py         # Task 4
+python src/data_acquisition_eda.py
+python src/feature_engineering.py
 ```
 
----
+See [SETUP.md](SETUP.md) for detailed setup instructions.
 
 ## API Usage
 
-### Input Features
+Make a prediction:
 
-| Feature  | Type  | Range   | Description                           |
-| -------- | ----- | ------- | ------------------------------------- |
-| age      | int   | 1-120   | Age in years                          |
-| sex      | int   | 0-1     | Sex (0: female, 1: male)              |
-| cp       | int   | 0-3     | Chest pain type                       |
-| trestbps | int   | 50-300  | Resting blood pressure (mm Hg)        |
-| chol     | int   | 100-600 | Serum cholesterol (mg/dl)             |
-| fbs      | int   | 0-1     | Fasting blood sugar > 120 mg/dl       |
-| restecg  | int   | 0-2     | Resting ECG results                   |
-| thalach  | int   | 60-220  | Maximum heart rate achieved           |
-| exang    | int   | 0-1     | Exercise induced angina               |
-| oldpeak  | float | 0-10    | ST depression induced by exercise     |
-| slope    | int   | 0-2     | Slope of peak exercise ST segment     |
-| ca       | int   | 0-4     | Number of major vessels (fluoroscopy) |
-| thal     | int   | 0-3     | Thalassemia type                      |
+```bash
+curl -X POST http://myprojectdemo.online/predict \
+  -H "Content-Type: application/json" \
+  -d '{"age": 55, "sex": 1, "cp": 3, "trestbps": 140, "chol": 250, "fbs": 0, "restecg": 1, "thalach": 150, "exang": 0, "oldpeak": 1.5, "slope": 2, "ca": 0, "thal": 3}'
+```
 
-### Response Format
+Response:
 
 ```json
 {
@@ -399,89 +156,16 @@ python src/model_packaging.py         # Task 4
 }
 ```
 
-Risk levels:
-
-- Low: confidence < 0.4
-- Medium: 0.4 <= confidence < 0.7
-- High: confidence >= 0.7
-
----
-
-## Configuration
-
-### Environment Variables
-
-| Variable            | Default                                                | Description     |
-| ------------------- | ------------------------------------------------------ | --------------- |
-| MODEL_PATH          | models/best_model.joblib                               | Model file path |
-| MLFLOW_TRACKING_URI | https://mlflow-tracking-production-53fb.up.railway.app | MLflow server   |
-| HOST                | 0.0.0.0                                                | API host        |
-| PORT                | 8000                                                   | API port        |
-| LOG_LEVEL           | INFO                                                   | Logging level   |
-
-### GitHub Secrets
-
-Required for CI/CD:
-
-- `MLFLOW_TRACKING_URI`: MLflow server URL
-- `GHCR_TOKEN`: GitHub Container Registry token (auto-provided)
-
----
-
-## Testing
-
-We have unit tests for each task in the `tests/` folder:
-
-- `test_task1_data_acquisition.py` - Data loading, quality checks, EDA
-- `test_task2_feature_engineering.py` - Feature engineering, model training
-- `test_task3_experiment_tracking.py` - MLflow experiment tracking
-- `test_task4_model_packaging.py` - Model packaging and validation
-- `test_feature_store.py` - Feature store validation and parity checks
-
-Run tests with:
-
-```bash
-# Run all tests
-python run_tests.py
-
-# Run specific task tests
-python run_tests.py --task1
-python run_tests.py --task2
-python run_tests.py --task3
-python run_tests.py --task4
-
-# Validate environment only
-python run_tests.py --validate-only
-```
-
-Tests also run automatically in CI/CD (GitHub Actions) on every push.
-
----
-
 ## Documentation
 
-| Document             | Description                |
-| -------------------- | -------------------------- |
-| INSTRUCTIONS.md      | Assignment requirements    |
-| PLAN.md              | Implementation plan        |
-| DEPLOYMENT-PLAN.md   | GCP deployment guide       |
-| MONITORING-PLAN.md   | Grafana Cloud setup        |
-| PIPELINE_WORKFLOW.md | Development workflow guide |
-| SONARQUBE.md         | SonarCloud integration     |
-| SETUP.md             | Quick setup instructions   |
+| Document                                     | Description                               |
+| -------------------------------------------- | ----------------------------------------- |
+| [SETUP.md](SETUP.md)                         | How to set up the development environment |
+| [PIPELINE_WORKFLOW.md](PIPELINE_WORKFLOW.md) | CI/CD pipeline explanation                |
+| [SONARQUBE.md](SONARQUBE.md)                 | SonarCloud integration                    |
+| [DEPLOYMENT-PLAN.md](DEPLOYMENT-PLAN.md)     | GCP deployment and automated deployments  |
+| [MONITORING-PLAN.md](MONITORING-PLAN.md)     | Grafana Cloud monitoring setup            |
 
----
+## Team
 
-## Repository
-
-- GitHub: https://github.com/sudheer628/group75-mlops-assignment
-- Container: ghcr.io/sudheer628/group75-mlops-assignment/heart-disease-api
-- MLflow Dashboard: https://mlflow-tracking-production-53fb.up.railway.app/
-- Grafana Dashboard: https://group75mlops.grafana.net/d/suwdlv9/group75-assignment
-- SonarCloud: https://sonarcloud.io/project/overview?id=sudheer628_Group75-MLops-Assignment
-
----
-
-## License
-
-This project is part of an MLOps course assignment (Group75) 2025-2026 BITS WILP
+Group75 - BITS WILP MLOps Course 2025-2026
