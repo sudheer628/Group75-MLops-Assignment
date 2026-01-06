@@ -90,7 +90,7 @@ Script: `src/model_packaging.py`
 
 We set up GitHub Actions with 5 workflows for linting, testing, building containers, and deploying. The pipeline automatically deploys to production when we push to main.
 
-See: [PIPELINE_WORKFLOW.md](PIPELINE_WORKFLOW.md)
+See: [PIPELINE_WORKFLOW.md](docs/PIPELINE_WORKFLOW.md)
 
 ### Task 6: Containerization
 
@@ -102,19 +102,19 @@ Files: `Dockerfile`, `docker-compose.yml`, `nginx.conf`
 
 We deployed to a GCP VM with automated deployments via GitHub Actions.
 
-See: [DEPLOYMENT-PLAN.md](DEPLOYMENT-PLAN.md)
+See: [DEPLOYMENT-PLAN.md](docs/DEPLOYMENT-PLAN.md)
 
 ### Task 8: Monitoring
 
 We set up Grafana Cloud with Prometheus metrics and Loki logs using Grafana Alloy agent.
 
-See: [MONITORING-PLAN.md](MONITORING-PLAN.md)
+See: [MONITORING-PLAN.md](docs/MONITORING-PLAN.md)
 
 ### Code Quality
 
 We integrated SonarCloud for static code analysis to catch bugs and code smells.
 
-See: [SONARQUBE.md](SONARQUBE.md)
+See: [SONARQUBE.md](docs/SONARQUBE.md)
 
 ### Feature Store
 
@@ -140,7 +140,7 @@ python src/data_acquisition_eda.py
 python src/feature_engineering.py
 ```
 
-See [SETUP.md](SETUP.md) for detailed setup instructions.
+See [SETUP.md](docs/SETUP.md) for detailed setup instructions.
 
 ## API Usage
 
@@ -165,13 +165,57 @@ Response:
 
 ## Documentation
 
-| Document                                     | Description                               |
-| -------------------------------------------- | ----------------------------------------- |
-| [SETUP.md](SETUP.md)                         | How to set up the development environment |
-| [PIPELINE_WORKFLOW.md](PIPELINE_WORKFLOW.md) | CI/CD pipeline explanation                |
-| [SONARQUBE.md](SONARQUBE.md)                 | SonarCloud integration                    |
-| [DEPLOYMENT-PLAN.md](DEPLOYMENT-PLAN.md)     | GCP deployment and automated deployments  |
-| [MONITORING-PLAN.md](MONITORING-PLAN.md)     | Grafana Cloud monitoring setup            |
+| Document                                          | Description                               |
+| ------------------------------------------------- | ----------------------------------------- |
+| [SETUP.md](docs/SETUP.md)                         | How to set up the development environment |
+| [PIPELINE_WORKFLOW.md](docs/PIPELINE_WORKFLOW.md) | CI/CD pipeline explanation                |
+| [SONARQUBE.md](docs/SONARQUBE.md)                 | SonarCloud integration                    |
+| [DEPLOYMENT-PLAN.md](docs/DEPLOYMENT-PLAN.md)     | GCP deployment and automated deployments  |
+| [MONITORING-PLAN.md](docs/MONITORING-PLAN.md)     | Grafana Cloud monitoring setup            |
+| [ML-PIPELINE.md](docs/ML-PIPELINE.md)             | ML pipeline flow diagrams                 |
+
+## Screenshots
+
+### CI CD Jobs
+
+![CI CD Jobs](images/cicd_jobs.jpg)
+
+### SonarQube integration through SonarCloud
+
+![SonarQube](images/sonar.jpg)
+
+### MLflow
+
+![MLflow](images/mlflow-1.jpg)
+
+### MLflow Dashboard
+
+![MLflow](images/mlflow-2.jpg)
+
+### MLflow Dashboard 2
+
+![MLflow](images/mlflow-3.jpg)
+
+### Grafana Monitoring
+
+![Grafana](images/grafana-1.jpg)
+
+### Grafana Metrics
+
+![Grafana](images/grafana-2.jpg)
+
+### Grafana Logs
+
+![Grafana](images/grafana-3.jpg)
+
+### GCP VM
+
+![GCP VM](images/gcp-vm-1.jpg)
+
+### GCP VM Docker Compose
+
+![GCP VM](images/gcp-vm-2.jpg)
+
 
 ## Team
 
